@@ -1,5 +1,7 @@
 const app = angular.module('scrollCityApp', []);
 
+// ─── Filters ──────────────────────────────────────────────
+
 app.filter('timeAgo', function() {
   return function(date) {
     if (!date) return '';
@@ -17,39 +19,40 @@ app.filter('trusted', ['$sce', function($sce) {
   };
 }]);
 
+// ─── Controller ────────────────────────────────────────────
+
 app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
 
-  // ─── API Base ──────────────────────────────────
+  // ─── API Base ──────────────────────────────────────────
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
     : 'https://scroll-city.onrender.com/api';
 
-  // ─── Page state ──────────────────────────────
+  // ─── Page state ──────────────────────────────────────
   $scope.currentPage = 'home';
 
   $scope.setPage = function(page) {
     $scope.currentPage = page;
   };
 
-  // ─── Cookie consent ──────────────────────────
+  // ─── Cookie consent ──────────────────────────────────
   $scope.cookiesAccepted = localStorage.getItem('cookiesAccepted') === 'true';
 
   $scope.acceptCookies = function() {
     localStorage.setItem('cookiesAccepted', 'true');
     $scope.cookiesAccepted = true;
-    // Force digest if needed
     if (!$scope.$$phase && !$scope.$$destroyed) {
       $scope.$apply();
     }
   };
 
-  // ─── Auth token ──────────────────────────────
+  // ─── Auth token ──────────────────────────────────────
   const token = localStorage.getItem('token');
   if (token) {
     $http.defaults.headers.common['Authorization'] = 'Bearer ' + token;
   }
 
-  // ─── State variables ─────────────────────────
+  // ─── State variables ────────────────────────────────
   $scope.currentUser = null;
   $scope.feedPosts = [];
   $scope.communities = [];
@@ -63,7 +66,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
   $scope.loginData = { identifier: '', password: '' };
   $scope.newPost = { content: '', image: '', video: '' };
 
-  // ─── Video modal ──────────────────────────────
+  // ─── Video modal ──────────────────────────────────────
   $scope.videoModalActive = false;
   $scope.videoEmbedUrl = '';
 
@@ -101,7 +104,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     $scope.videoEmbedUrl = '';
   };
 
-  // ─── Trending & notifications ─────────────────
+  // ─── Trending & notifications ──────────────────────
   function computeTrending(posts) {
     const hashtagCount = {};
     posts.forEach(p => {
@@ -140,7 +143,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     return count;
   }
 
-  // ─── Load data ──────────────────────────────────
+  // ─── Load data ──────────────────────────────────────
   if (token) {
     $http.get(API_BASE + '/auth/me').then(res => {
       $scope.currentUser = res.data;
@@ -178,7 +181,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     { name: 'KYMarketBot', avatar: 'https://robohash.org/kymarketbot?set=set4&size=100x100', snippet: 'Louisville home prices up 4.2% YoY 📈' }
   ];
 
-  // ─── Auth ──────────────────────────────────────
+  // ─── Auth ──────────────────────────────────────────
   $scope.submitSignup = function() {
     const data = $scope.signupData;
     if (!data.name || !data.email || !data.username || !data.password) {
@@ -236,7 +239,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     $scope.setPage('home');
   };
 
-  // ─── Posts ──────────────────────────────────────
+  // ─── Posts ──────────────────────────────────────────
   $scope.submitPost = function() {
     if (!$scope.currentUser) {
       alert('Please log in first.');
@@ -297,7 +300,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     if ($event.key === 'Enter') $scope.addComment(post);
   };
 
-  // ─── Communities ──────────────────────────────
+  // ─── Communities ──────────────────────────────────
   $scope.toggleJoin = function(comm) {
     if (!$scope.currentUser) {
       alert('Please log in to join communities.');
@@ -309,7 +312,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     });
   };
 
-  // ─── UI helpers ──────────────────────────────
+  // ─── UI helpers ──────────────────────────────────
   $scope.openSignup = function() { $scope.modalMode = 'signup'; $scope.modalActive = true; };
   $scope.openLogin = function() { $scope.modalMode = 'login'; $scope.modalActive = true; };
   $scope.openProfile = function() {
@@ -336,4 +339,52 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
   $interval(() => {
     loadFeed();
   }, 30000);
+});
+
+// ─── Footer toggle logic (outside Angular) ────────────────
+
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function() {
+  const footer = document.querySelector('footer');
+  if (!footer) return;
+
+  let lastScrollY = window.scrollY;
+  let scrollTimeout;
+
+  function handleScroll() {
+    const currentScrollY = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+
+    // Show footer when user scrolls down and is near the bottom of the page
+    // or if they scroll down at all (more intuitive)
+    if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      footer.classList.add('visible');
+    } else if (currentScrollY < lastScrollY) {
+      // if scrolled up, hide footer (but only if not hovering)
+      if (!footer.matches(':hover')) {
+        footer.classList.remove('visible');
+      }
+    }
+
+    // Also show if user is near the bottom of the page
+    if (currentScrollY + windowHeight >= documentHeight - 100) {
+      footer.classList.add('visible');
+    }
+
+    lastScrollY = currentScrollY;
+  }
+
+  // Debounce scroll events for performance
+  window.addEventListener('scroll', function() {
+    if (scrollTimeout) return;
+    scrollTimeout = setTimeout(() => {
+      handleScroll();
+      scrollTimeout = null;
+    }, 100);
+  });
+
+  // Show footer on hover (already handled by CSS)
+  // Ensure footer is hidden initially
+  footer.classList.remove('visible');
 });
