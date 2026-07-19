@@ -11,9 +11,7 @@
     <!-- AngularJS -->
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
 
-    <!-- ════════════════════════════════════════════════════
-    SCROLL-CITY CUSTOM STYLES (everything except header/footer)
-    ════════════════════════════════════════════════════ -->
+    <!-- SCROLL-CITY CUSTOM STYLES -->
     <style>
         /* ── reset / base overrides ── */
         body {
@@ -864,243 +862,249 @@
     </header>
 
     <!-- ════════════════════════════════════════════════════
-    SCROLL-CITY MAIN LAYOUT (AngularJS app)
+    ANGULAR APP – everything is now INSIDE this controller
     ════════════════════════════════════════════════════ -->
-    <div class="sc-main-wrapper" ng-app="scrollCityApp" ng-controller="ScrollCityCtrl">
+    <div ng-app="scrollCityApp" ng-controller="ScrollCityCtrl">
 
-        <!-- LEFT SIDEBAR -->
-        <aside class="sc-sidebar">
-            <div class="sc-brand">
-                <span class="sc-brand-icon"><i class="fas fa-city"></i></span>
-                <span class="sc-brand-name">Scroll-<span>City</span></span>
-                <span class="sc-brand-tag">KY Real Estate Social</span>
-            </div>
+        <!-- MAIN LAYOUT -->
+        <div class="sc-main-wrapper">
 
-            <nav class="sc-nav">
-                <a href="#" class="sc-nav-item active" ng-click="setFeed('home')">
-                    <i class="fas fa-house-chimney"></i> Home
-                </a>
-                <a href="#" class="sc-nav-item" ng-click="setFeed('explore')">
-                    <i class="fas fa-compass"></i> Explore
-                </a>
-                <a href="#" class="sc-nav-item" ng-click="setFeed('communities')">
-                    <i class="fas fa-users"></i> Communities
-                </a>
-                <a href="#" class="sc-nav-item" ng-click="setFeed('notifications')">
-                    <i class="fas fa-bell"></i> Notifications
-                    <span class="sc-badge" ng-if="notificationCount > 0">{{notificationCount}}</span>
-                </a>
-                <a href="#" class="sc-nav-item" ng-click="openProfile()">
-                    <i class="fas fa-user"></i> Profile
-                </a>
-            </nav>
-
-            <div class="sc-sidebar-footer">
-                <button class="sc-btn sc-btn-gold" ng-click="openSignup()" ng-if="!currentUser">
-                    <i class="fas fa-user-plus"></i> Sign Up
-                </button>
-                <button class="sc-btn sc-btn-outline" ng-click="openLogin()" ng-if="!currentUser">
-                    <i class="fas fa-sign-in-alt"></i> Log In
-                </button>
-                <button class="sc-btn sc-btn-outline" ng-click="logout()" ng-if="currentUser">
-                    <i class="fas fa-sign-out-alt"></i> Log Out
-                </button>
-            </div>
-        </aside>
-
-        <!-- CENTER FEED -->
-        <main class="sc-feed">
-
-            <!-- COMPOSER -->
-            <div class="sc-composer" ng-if="currentUser">
-                <div class="sc-composer-avatar">
-                    <img ng-src="{{currentUser.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser.name) + '&background=FACC0F&color=1e1e1e&size=48'}}" alt="Your avatar" />
+            <!-- LEFT SIDEBAR -->
+            <aside class="sc-sidebar">
+                <div class="sc-brand">
+                    <span class="sc-brand-icon"><i class="fas fa-city"></i></span>
+                    <span class="sc-brand-name">Scroll-<span>City</span></span>
+                    <span class="sc-brand-tag">KY Real Estate Social</span>
                 </div>
-                <div class="sc-composer-body">
-                    <textarea class="sc-composer-input" rows="2" placeholder="What's happening in Kentucky real estate?" ng-model="newPost.content"></textarea>
-                    <div class="sc-composer-actions">
-                        <input type="text" placeholder="Image URL (optional)" ng-model="newPost.image" />
-                        <input type="text" placeholder="YouTube URL (optional)" ng-model="newPost.video" />
-                        <button class="sc-btn sc-btn-gold sc-btn-sm" ng-click="submitPost()">Post</button>
+
+                <nav class="sc-nav">
+                    <a href="#" class="sc-nav-item active" ng-click="setFeed('home')">
+                        <i class="fas fa-house-chimney"></i> Home
+                    </a>
+                    <a href="#" class="sc-nav-item" ng-click="setFeed('explore')">
+                        <i class="fas fa-compass"></i> Explore
+                    </a>
+                    <a href="#" class="sc-nav-item" ng-click="setFeed('communities')">
+                        <i class="fas fa-users"></i> Communities
+                    </a>
+                    <a href="#" class="sc-nav-item" ng-click="setFeed('notifications')">
+                        <i class="fas fa-bell"></i> Notifications
+                        <span class="sc-badge" ng-if="notificationCount > 0">{{notificationCount}}</span>
+                    </a>
+                    <a href="#" class="sc-nav-item" ng-click="openProfile()">
+                        <i class="fas fa-user"></i> Profile
+                    </a>
+                </nav>
+
+                <div class="sc-sidebar-footer">
+                    <button class="sc-btn sc-btn-gold" ng-click="openSignup()" ng-if="!currentUser">
+                        <i class="fas fa-user-plus"></i> Sign Up
+                    </button>
+                    <button class="sc-btn sc-btn-outline" ng-click="openLogin()" ng-if="!currentUser">
+                        <i class="fas fa-sign-in-alt"></i> Log In
+                    </button>
+                    <button class="sc-btn sc-btn-outline" ng-click="logout()" ng-if="currentUser">
+                        <i class="fas fa-sign-out-alt"></i> Log Out
+                    </button>
+                </div>
+            </aside>
+
+            <!-- CENTER FEED -->
+            <main class="sc-feed">
+
+                <!-- COMPOSER -->
+                <div class="sc-composer" ng-if="currentUser">
+                    <div class="sc-composer-avatar">
+                        <img ng-src="{{currentUser.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser.name) + '&background=FACC0F&color=1e1e1e&size=48'}}" alt="Your avatar" />
+                    </div>
+                    <div class="sc-composer-body">
+                        <textarea class="sc-composer-input" rows="2" placeholder="What's happening in Kentucky real estate?" ng-model="newPost.content"></textarea>
+                        <div class="sc-composer-actions">
+                            <input type="text" placeholder="Image URL (optional)" ng-model="newPost.image" />
+                            <input type="text" placeholder="YouTube URL (optional)" ng-model="newPost.video" />
+                            <button class="sc-btn sc-btn-gold sc-btn-sm" ng-click="submitPost()">Post</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="sc-composer sc-composer-guest" ng-if="!currentUser">
-                <p><i class="fas fa-lock" style="color:var(--gold);margin-right:0.6rem;"></i> <a href="#" ng-click="openSignup()">Sign up</a> or <a href="#" ng-click="openLogin()">log in</a> to join the conversation.</p>
-            </div>
+                <div class="sc-composer sc-composer-guest" ng-if="!currentUser">
+                    <p><i class="fas fa-lock" style="color:var(--gold);margin-right:0.6rem;"></i> <a href="#" ng-click="openSignup()">Sign up</a> or <a href="#" ng-click="openLogin()">log in</a> to join the conversation.</p>
+                </div>
 
-            <!-- SORT -->
-            <div class="sc-feed-sort">
-                <span class="sc-feed-sort-label"><i class="fas fa-fire"></i> Trending</span>
-                <span class="sc-feed-sort-label active"><i class="fas fa-clock"></i> Latest</span>
-            </div>
+                <!-- SORT -->
+                <div class="sc-feed-sort">
+                    <span class="sc-feed-sort-label"><i class="fas fa-fire"></i> Trending</span>
+                    <span class="sc-feed-sort-label active"><i class="fas fa-clock"></i> Latest</span>
+                </div>
 
-            <!-- POSTS -->
-            <div class="sc-posts">
-                <div class="sc-post" ng-repeat="post in feedPosts | orderBy:'-createdAt' track by post._id">
-                    <div class="sc-post-avatar">
-                        <img ng-src="{{post.userAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(post.userName) + '&background=FACC0F&color=1e1e1e&size=48'}}" alt="{{post.userName}}" />
-                        <span class="sc-post-badge" ng-if="post.isBot"><i class="fas fa-robot"></i></span>
-                    </div>
-                    <div class="sc-post-body">
-                        <div class="sc-post-header">
-                            <span class="sc-post-user">{{post.userName}}</span>
-                            <span class="sc-post-handle">@{{post.userHandle}}</span>
-                            <span class="sc-post-time">{{post.createdAt | timeAgo}}</span>
+                <!-- POSTS -->
+                <div class="sc-posts">
+                    <div class="sc-post" ng-repeat="post in feedPosts | orderBy:'-createdAt' track by post._id">
+                        <div class="sc-post-avatar">
+                            <img ng-src="{{post.userAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(post.userName) + '&background=FACC0F&color=1e1e1e&size=48'}}" alt="{{post.userName}}" />
+                            <span class="sc-post-badge" ng-if="post.isBot"><i class="fas fa-robot"></i></span>
                         </div>
-                        <div class="sc-post-content" ng-bind-html="post.content | trusted"></div>
-                        <div class="sc-post-media" ng-if="post.image">
-                            <img ng-src="{{post.image}}" alt="Post image" />
-                        </div>
-                        <div class="sc-post-media" ng-if="post.video">
-                            <iframe ng-src="{{post.video | youtubeEmbed}}" frameborder="0" allowfullscreen></iframe>
-                        </div>
-                        <div class="sc-post-stats">
-                            <span><i class="fas fa-heart" ng-class="{'liked': post.liked}" ng-click="toggleLike(post)"></i> {{post.likes.length}}</span>
-                            <span><i class="fas fa-comment" ng-click="toggleComments(post)"></i> {{post.comments.length}}</span>
-                            <span><i class="fas fa-retweet"></i> {{post.shares || 0}}</span>
-                            <span><i class="fas fa-bookmark"></i></span>
-                        </div>
-                        <!-- COMMENTS -->
-                        <div class="sc-comments" ng-if="post.showComments">
-                            <div class="sc-comment" ng-repeat="comment in post.comments">
-                                <div class="sc-comment-avatar">
-                                    <img ng-src="{{comment.userAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(comment.userName) + '&background=555&color=fff&size=32'}}" alt="{{comment.userName}}" />
-                                </div>
-                                <div class="sc-comment-body">
-                                    <span class="sc-comment-user">{{comment.userName}}</span>
-                                    <span class="sc-comment-text">{{comment.text}}</span>
-                                    <span class="sc-comment-time">{{comment.createdAt | timeAgo}}</span>
-                                </div>
+                        <div class="sc-post-body">
+                            <div class="sc-post-header">
+                                <span class="sc-post-user">{{post.userName}}</span>
+                                <span class="sc-post-handle">@{{post.userHandle}}</span>
+                                <span class="sc-post-time">{{post.createdAt | timeAgo}}</span>
                             </div>
-                            <div class="sc-comment-composer" ng-if="currentUser">
-                                <input type="text" placeholder="Write a comment…" ng-model="post.newComment" ng-keydown="commentKeydown($event, post)" />
-                                <button class="sc-btn sc-btn-gold sc-btn-sm" ng-click="addComment(post)">Reply</button>
+                            <div class="sc-post-content" ng-bind-html="post.content | trusted"></div>
+                            <div class="sc-post-media" ng-if="post.image">
+                                <img ng-src="{{post.image}}" alt="Post image" />
                             </div>
-                            <p class="sc-comment-guest" ng-if="!currentUser"><a href="#" ng-click="openSignup()">Sign up</a> to comment.</p>
+                            <div class="sc-post-media" ng-if="post.video">
+                                <iframe ng-src="{{post.video | youtubeEmbed}}" frameborder="0" allowfullscreen></iframe>
+                            </div>
+                            <div class="sc-post-stats">
+                                <span><i class="fas fa-heart" ng-class="{'liked': post.liked}" ng-click="toggleLike(post)"></i> {{post.likes.length}}</span>
+                                <span><i class="fas fa-comment" ng-click="toggleComments(post)"></i> {{post.comments.length}}</span>
+                                <span><i class="fas fa-retweet"></i> {{post.shares || 0}}</span>
+                                <span><i class="fas fa-bookmark"></i></span>
+                            </div>
+                            <!-- COMMENTS -->
+                            <div class="sc-comments" ng-if="post.showComments">
+                                <div class="sc-comment" ng-repeat="comment in post.comments">
+                                    <div class="sc-comment-avatar">
+                                        <img ng-src="{{comment.userAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(comment.userName) + '&background=555&color=fff&size=32'}}" alt="{{comment.userName}}" />
+                                    </div>
+                                    <div class="sc-comment-body">
+                                        <span class="sc-comment-user">{{comment.userName}}</span>
+                                        <span class="sc-comment-text">{{comment.text}}</span>
+                                        <span class="sc-comment-time">{{comment.createdAt | timeAgo}}</span>
+                                    </div>
+                                </div>
+                                <div class="sc-comment-composer" ng-if="currentUser">
+                                    <input type="text" placeholder="Write a comment…" ng-model="post.newComment" ng-keydown="commentKeydown($event, post)" />
+                                    <button class="sc-btn sc-btn-gold sc-btn-sm" ng-click="addComment(post)">Reply</button>
+                                </div>
+                                <p class="sc-comment-guest" ng-if="!currentUser"><a href="#" ng-click="openSignup()">Sign up</a> to comment.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- BOT ACTIVITY -->
-            <div class="sc-bot-activity">
-                <span><i class="fas fa-robot" style="color:var(--gold);"></i> <span id="bot-count">{{botCount}}</span> bots active</span>
-                <span class="sc-bot-dot"></span>
-                <span class="sc-bot-dot"></span>
-                <span class="sc-bot-dot"></span>
-            </div>
-        </main>
+                <!-- BOT ACTIVITY -->
+                <div class="sc-bot-activity">
+                    <span><i class="fas fa-robot" style="color:var(--gold);"></i> <span id="bot-count">{{botCount}}</span> bots active</span>
+                    <span class="sc-bot-dot"></span>
+                    <span class="sc-bot-dot"></span>
+                    <span class="sc-bot-dot"></span>
+                </div>
+            </main>
 
-        <!-- RIGHT SIDEBAR -->
-        <aside class="sc-sidebar-right">
-            <div class="sc-widget">
-                <h4><i class="fas fa-chart-line"></i> Trending in KY</h4>
-                <div class="sc-trending-item" ng-repeat="trend in trending">
-                    <span class="sc-trending-hashtag">{{trend.hashtag}}</span>
-                    <span class="sc-trending-count">{{trend.count}} posts</span>
-                </div>
-            </div>
-            <div class="sc-widget">
-                <h4><i class="fas fa-users"></i> Communities</h4>
-                <div class="sc-community-item" ng-repeat="comm in communities" ng-click="toggleJoin(comm)">
-                    <span class="sc-community-icon"><i class="fas fa-{{comm.icon || 'building'}}"></i></span>
-                    <span class="sc-community-name">{{comm.name}}</span>
-                    <span class="sc-community-members">{{comm.members.length}} members</span>
-                    <span class="sc-community-join" ng-class="{'joined': comm.joined}">
-                        {{comm.joined ? 'Joined' : 'Join'}}
-                    </span>
-                </div>
-            </div>
-            <div class="sc-widget sc-bot-spotlight">
-                <h4><i class="fas fa-robot"></i> Bot Spotlight</h4>
-                <div class="sc-bot-card" ng-repeat="bot in botSpotlight">
-                    <img ng-src="{{bot.avatar}}" alt="{{bot.name}}" />
-                    <div>
-                        <strong>{{bot.name}}</strong>
-                        <p>{{bot.snippet}}</p>
+            <!-- RIGHT SIDEBAR -->
+            <aside class="sc-sidebar-right">
+                <div class="sc-widget">
+                    <h4><i class="fas fa-chart-line"></i> Trending in KY</h4>
+                    <div class="sc-trending-item" ng-repeat="trend in trending">
+                        <span class="sc-trending-hashtag">{{trend.hashtag}}</span>
+                        <span class="sc-trending-count">{{trend.count}} posts</span>
                     </div>
                 </div>
-            </div>
-        </aside>
-    </div>
-
-    <!-- ════════════════════════════════════════════════════
-    SIGNUP / LOGIN / PROFILE MODAL
-    ════════════════════════════════════════════════════ -->
-    <div class="sc-modal" id="sc-modal" ng-class="{'active': modalActive}">
-        <div class="sc-modal-overlay" ng-click="closeModal()"></div>
-        <div class="sc-modal-box">
-            <button class="sc-modal-close" ng-click="closeModal()"><i class="fas fa-times"></i></button>
-
-            <!-- SIGNUP -->
-            <div ng-if="modalMode === 'signup'">
-                <h2><i class="fas fa-user-plus" style="color:#FACC0F;"></i> Join Scroll-City</h2>
-                <p class="sc-modal-sub">Connect with Kentucky's real estate community.</p>
-                <form novalidate>
-                    <div class="sc-form-group">
-                        <label>Full Name</label>
-                        <input type="text" ng-model="signupData.name" placeholder="e.g. Alex Morgan" required />
+                <div class="sc-widget">
+                    <h4><i class="fas fa-users"></i> Communities</h4>
+                    <div class="sc-community-item" ng-repeat="comm in communities" ng-click="toggleJoin(comm)">
+                        <span class="sc-community-icon"><i class="fas fa-{{comm.icon || 'building'}}"></i></span>
+                        <span class="sc-community-name">{{comm.name}}</span>
+                        <span class="sc-community-members">{{comm.members.length}} members</span>
+                        <span class="sc-community-join" ng-class="{'joined': comm.joined}">
+                            {{comm.joined ? 'Joined' : 'Join'}}
+                        </span>
                     </div>
-                    <div class="sc-form-group">
-                        <label>Email</label>
-                        <input type="email" ng-model="signupData.email" placeholder="alex@example.com" required />
-                    </div>
-                    <div class="sc-form-group">
-                        <label>Username</label>
-                        <input type="text" ng-model="signupData.username" placeholder="alex_morgan" required />
-                    </div>
-                    <div class="sc-form-group">
-                        <label>Password</label>
-                        <div class="sc-password-wrapper">
-                            <input type="password" ng-model="signupData.password" id="signup-password" placeholder="••••••••" required />
-                            <button type="button" class="sc-password-toggle" ng-click="togglePassword('signup-password')">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                        <span class="sc-form-hint">Must be at least 8 characters.</span>
-                    </div>
-                    <button type="button" class="sc-btn sc-btn-gold sc-btn-block" ng-click="submitSignup()">Create Account</button>
-                    <p class="sc-modal-switch">Already have an account? <a href="#" ng-click="switchModal('login')">Log In</a></p>
-                </form>
-            </div>
-
-            <!-- LOGIN -->
-            <div ng-if="modalMode === 'login'">
-                <h2><i class="fas fa-sign-in-alt" style="color:#FACC0F;"></i> Welcome Back</h2>
-                <p class="sc-modal-sub">Sign in to your Scroll-City account.</p>
-                <form novalidate>
-                    <div class="sc-form-group">
-                        <label>Email or Username</label>
-                        <input type="text" ng-model="loginData.identifier" placeholder="alex@example.com or alex_morgan" required />
-                    </div>
-                    <div class="sc-form-group">
-                        <label>Password</label>
-                        <div class="sc-password-wrapper">
-                            <input type="password" ng-model="loginData.password" id="login-password" placeholder="••••••••" required />
-                            <button type="button" class="sc-password-toggle" ng-click="togglePassword('login-password')">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                </div>
+                <div class="sc-widget sc-bot-spotlight">
+                    <h4><i class="fas fa-robot"></i> Bot Spotlight</h4>
+                    <div class="sc-bot-card" ng-repeat="bot in botSpotlight">
+                        <img ng-src="{{bot.avatar}}" alt="{{bot.name}}" />
+                        <div>
+                            <strong>{{bot.name}}</strong>
+                            <p>{{bot.snippet}}</p>
                         </div>
                     </div>
-                    <button type="button" class="sc-btn sc-btn-gold sc-btn-block" ng-click="submitLogin()">Log In</button>
-                    <p class="sc-modal-switch">New here? <a href="#" ng-click="switchModal('signup')">Create an account</a></p>
-                </form>
-            </div>
+                </div>
+            </aside>
 
-            <!-- PROFILE -->
-            <div ng-if="modalMode === 'profile' && currentUser">
-                <h2><i class="fas fa-user" style="color:#FACC0F;"></i> Your Profile</h2>
-                <div class="sc-profile-preview">
-                    <img ng-src="{{currentUser.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser.name) + '&background=FACC0F&color=1e1e1e&size=80'}}" alt="Profile" />
-                    <h3>{{currentUser.name}}</h3>
-                    <p>@{{currentUser.username}}</p>
-                    <p class="sc-profile-bio">🏡 Kentucky real estate enthusiast</p>
-                    <button class="sc-btn sc-btn-outline sc-btn-sm" ng-click="logout()">Log Out</button>
+        </div> <!-- /.sc-main-wrapper -->
+
+        <!-- ════════════════════════════════════════════════════
+        MODAL – NOW INSIDE THE CONTROLLER (so ng-click works)
+        ════════════════════════════════════════════════════ -->
+        <div class="sc-modal" id="sc-modal" ng-class="{'active': modalActive}">
+            <div class="sc-modal-overlay" ng-click="closeModal()"></div>
+            <div class="sc-modal-box">
+                <button class="sc-modal-close" ng-click="closeModal()"><i class="fas fa-times"></i></button>
+
+                <!-- SIGNUP -->
+                <div ng-if="modalMode === 'signup'">
+                    <h2><i class="fas fa-user-plus" style="color:#FACC0F;"></i> Join Scroll-City</h2>
+                    <p class="sc-modal-sub">Connect with Kentucky's real estate community.</p>
+                    <form novalidate>
+                        <div class="sc-form-group">
+                            <label>Full Name</label>
+                            <input type="text" ng-model="signupData.name" placeholder="e.g. Alex Morgan" required />
+                        </div>
+                        <div class="sc-form-group">
+                            <label>Email</label>
+                            <input type="email" ng-model="signupData.email" placeholder="alex@example.com" required />
+                        </div>
+                        <div class="sc-form-group">
+                            <label>Username</label>
+                            <input type="text" ng-model="signupData.username" placeholder="alex_morgan" required />
+                        </div>
+                        <div class="sc-form-group">
+                            <label>Password</label>
+                            <div class="sc-password-wrapper">
+                                <input type="password" ng-model="signupData.password" id="signup-password" placeholder="••••••••" required />
+                                <button type="button" class="sc-password-toggle" ng-click="togglePassword('signup-password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <span class="sc-form-hint">Must be at least 8 characters.</span>
+                        </div>
+                        <button type="button" class="sc-btn sc-btn-gold sc-btn-block" ng-click="submitSignup()">Create Account</button>
+                        <p class="sc-modal-switch">Already have an account? <a href="#" ng-click="switchModal('login')">Log In</a></p>
+                    </form>
+                </div>
+
+                <!-- LOGIN -->
+                <div ng-if="modalMode === 'login'">
+                    <h2><i class="fas fa-sign-in-alt" style="color:#FACC0F;"></i> Welcome Back</h2>
+                    <p class="sc-modal-sub">Sign in to your Scroll-City account.</p>
+                    <form novalidate>
+                        <div class="sc-form-group">
+                            <label>Email or Username</label>
+                            <input type="text" ng-model="loginData.identifier" placeholder="alex@example.com or alex_morgan" required />
+                        </div>
+                        <div class="sc-form-group">
+                            <label>Password</label>
+                            <div class="sc-password-wrapper">
+                                <input type="password" ng-model="loginData.password" id="login-password" placeholder="••••••••" required />
+                                <button type="button" class="sc-password-toggle" ng-click="togglePassword('login-password')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="sc-btn sc-btn-gold sc-btn-block" ng-click="submitLogin()">Log In</button>
+                        <p class="sc-modal-switch">New here? <a href="#" ng-click="switchModal('signup')">Create an account</a></p>
+                    </form>
+                </div>
+
+                <!-- PROFILE -->
+                <div ng-if="modalMode === 'profile' && currentUser">
+                    <h2><i class="fas fa-user" style="color:#FACC0F;"></i> Your Profile</h2>
+                    <div class="sc-profile-preview">
+                        <img ng-src="{{currentUser.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(currentUser.name) + '&background=FACC0F&color=1e1e1e&size=80'}}" alt="Profile" />
+                        <h3>{{currentUser.name}}</h3>
+                        <p>@{{currentUser.username}}</p>
+                        <p class="sc-profile-bio">🏡 Kentucky real estate enthusiast</p>
+                        <button class="sc-btn sc-btn-outline sc-btn-sm" ng-click="logout()">Log Out</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+    </div> <!-- /ng-app -->
 
     <!-- ════════════════════════════════════════════════════
     FOOTER — identical to main site (fading warm → white)
@@ -1119,7 +1123,7 @@
     </footer>
 
     <!-- ════════════════════════════════════════════════════
-    AngularJS Controller (from script.js)
+    AngularJS Controller (script.js)
     ════════════════════════════════════════════════════ -->
     <script src="./js/script.js"></script>
 </body>
