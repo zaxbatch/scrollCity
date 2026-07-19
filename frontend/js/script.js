@@ -17,18 +17,6 @@ app.filter('trusted', ['$sce', function($sce) {
   };
 }]);
 
-app.filter('youtubeEmbed', ['$sce', function($sce) {
-  return function(url) {
-    if (!url) return '';
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2].length === 11) {
-      return $sce.trustAsResourceUrl('https://www.youtube.com/embed/' + match[2]);
-    }
-    return '';
-  };
-}]);
-
 app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
 
   const API_BASE = window.location.hostname === 'localhost' 
@@ -56,6 +44,31 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
   $scope.loginData = { identifier: '', password: '' };
   $scope.newPost = { content: '', image: '', video: '' };
 
+  // ─── Video modal state ────────────────────────
+  $scope.videoModalActive = false;
+  $scope.videoEmbedUrl = '';
+
+  function getYoutubeEmbedUrl(url) {
+    if (!url) return '';
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      return 'https://www.youtube.com/embed/' + match[2] + '?autoplay=1';
+    }
+    return url; // fallback
+  }
+
+  $scope.openVideo = function(url) {
+    $scope.videoEmbedUrl = getYoutubeEmbedUrl(url);
+    $scope.videoModalActive = true;
+  };
+
+  $scope.closeVideo = function() {
+    $scope.videoModalActive = false;
+    $scope.videoEmbedUrl = '';
+  };
+
+  // ─── Compute trending ─────────────────────────
   function computeTrending(posts) {
     const hashtagCount = {};
     posts.forEach(p => {
@@ -94,6 +107,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     return count;
   }
 
+  // ─── Load user ──────────────────────────────────
   if (token) {
     $http.get(API_BASE + '/auth/me').then(res => {
       $scope.currentUser = res.data;
@@ -132,12 +146,11 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     { name: 'KYMarketBot', avatar: 'https://robohash.org/kymarketbot?set=set4&size=100x100', snippet: 'Louisville home prices up 4.2% YoY 📈' }
   ];
 
-  // ─── AUTH with logging ────────────────────────────
+  // ─── AUTH ──────────────────────────────────────
 
   $scope.submitSignup = function() {
     console.log('🔵 Signup button clicked');
     const data = $scope.signupData;
-    console.log('📦 Signup data:', data);
     if (!data.name || !data.email || !data.username || !data.password) {
       alert('Please fill in all fields.');
       return;
@@ -146,10 +159,8 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
       alert('Password must be at least 8 characters.');
       return;
     }
-    console.log('📡 Sending signup request to:', API_BASE + '/auth/signup');
     $http.post(API_BASE + '/auth/signup', data)
       .then(res => {
-        console.log('✅ Signup success:', res.data);
         const result = res.data;
         localStorage.setItem('token', result.token);
         $http.defaults.headers.common['Authorization'] = 'Bearer ' + result.token;
@@ -169,15 +180,12 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
   $scope.submitLogin = function() {
     console.log('🔵 Login button clicked');
     const data = $scope.loginData;
-    console.log('📦 Login data:', data);
     if (!data.identifier || !data.password) {
       alert('Please enter your email/username and password.');
       return;
     }
-    console.log('📡 Sending login request to:', API_BASE + '/auth/login');
     $http.post(API_BASE + '/auth/login', data)
       .then(res => {
-        console.log('✅ Login success:', res.data);
         const result = res.data;
         localStorage.setItem('token', result.token);
         $http.defaults.headers.common['Authorization'] = 'Bearer ' + result.token;
