@@ -17,7 +17,7 @@ app.filter('trusted', ['$sce', function($sce) {
   };
 }]);
 
-app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
+app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
 
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
@@ -28,7 +28,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
   const token = localStorage.getItem('token');
   if (token) {
     $http.defaults.headers.common['Authorization'] = 'Bearer ' + token;
-    console.log('🔑 Token found in localStorage');
   }
 
   $scope.currentUser = null;
@@ -44,23 +43,45 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
   $scope.loginData = { identifier: '', password: '' };
   $scope.newPost = { content: '', image: '', video: '' };
 
-  // ─── Video modal state ────────────────────────
+  // ─── Video modal state ────────────────────────────────
   $scope.videoModalActive = false;
   $scope.videoEmbedUrl = '';
 
+  // Convert any YouTube URL to embed URL, with Shorts support
   function getYoutubeEmbedUrl(url) {
     if (!url) return '';
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2].length === 11) {
-      return 'https://www.youtube.com/embed/' + match[2] + '?autoplay=1';
+    let videoId = null;
+
+    // Normal YouTube watch URL: youtube.com/watch?v=VIDEO_ID
+    let match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^#&?]*)/);
+    if (match && match[1]) videoId = match[1];
+
+    // YouTube Shorts: youtube.com/shorts/VIDEO_ID
+    if (!videoId) {
+      match = url.match(/youtube\.com\/shorts\/([^#&?]*)/);
+      if (match && match[1]) videoId = match[1];
     }
-    return url; // fallback
+
+    // YouTube embed URL: youtube.com/embed/VIDEO_ID
+    if (!videoId) {
+      match = url.match(/youtube\.com\/embed\/([^#&?]*)/);
+      if (match && match[1]) videoId = match[1];
+    }
+
+    if (videoId && videoId.length === 11) {
+      return 'https://www.youtube.com/embed/' + videoId + '?autoplay=1';
+    }
+    return ''; // fallback – not a valid YouTube URL
   }
 
   $scope.openVideo = function(url) {
-    $scope.videoEmbedUrl = getYoutubeEmbedUrl(url);
-    $scope.videoModalActive = true;
+    const embedUrl = getYoutubeEmbedUrl(url);
+    if (embedUrl) {
+      $scope.videoEmbedUrl = $sce.trustAsResourceUrl(embedUrl);
+      $scope.videoModalActive = true;
+    } else {
+      alert('Invalid YouTube URL. Please use a standard YouTube or Shorts link.');
+    }
   };
 
   $scope.closeVideo = function() {
@@ -68,7 +89,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     $scope.videoEmbedUrl = '';
   };
 
-  // ─── Compute trending ─────────────────────────
+  // ─── Compute trending ──────────────────────────────────
   function computeTrending(posts) {
     const hashtagCount = {};
     posts.forEach(p => {
@@ -107,11 +128,10 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     return count;
   }
 
-  // ─── Load user ──────────────────────────────────
+  // ─── Load user ──────────────────────────────────────────
   if (token) {
     $http.get(API_BASE + '/auth/me').then(res => {
       $scope.currentUser = res.data;
-      console.log('👤 User loaded:', $scope.currentUser);
     }).catch(() => {
       localStorage.removeItem('token');
       delete $http.defaults.headers.common['Authorization'];
@@ -146,10 +166,9 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     { name: 'KYMarketBot', avatar: 'https://robohash.org/kymarketbot?set=set4&size=100x100', snippet: 'Louisville home prices up 4.2% YoY 📈' }
   ];
 
-  // ─── AUTH ──────────────────────────────────────
+  // ─── Auth ──────────────────────────────────────────────
 
   $scope.submitSignup = function() {
-    console.log('🔵 Signup button clicked');
     const data = $scope.signupData;
     if (!data.name || !data.email || !data.username || !data.password) {
       alert('Please fill in all fields.');
@@ -171,14 +190,12 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
         alert('Welcome ' + result.user.name + '!');
       })
       .catch(err => {
-        console.error('❌ Signup error:', err);
         const msg = err.data?.error || err.statusText || 'Signup failed';
         alert(msg);
       });
   };
 
   $scope.submitLogin = function() {
-    console.log('🔵 Login button clicked');
     const data = $scope.loginData;
     if (!data.identifier || !data.password) {
       alert('Please enter your email/username and password.');
@@ -196,7 +213,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
         alert('Welcome back ' + result.user.name + '!');
       })
       .catch(err => {
-        console.error('❌ Login error:', err);
         const msg = err.data?.error || err.statusText || 'Login failed';
         alert(msg);
       });
@@ -208,10 +224,9 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     $scope.currentUser = null;
     $scope.notificationCount = 0;
     loadFeed();
-    console.log('👋 Logged out');
   };
 
-  // ─── Posts ──────────────────────────────────────
+  // ─── Posts ──────────────────────────────────────────────
 
   $scope.submitPost = function() {
     if (!$scope.currentUser) {
@@ -273,7 +288,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     if ($event.key === 'Enter') $scope.addComment(post);
   };
 
-  // ─── Communities ──────────────────────────────
+  // ─── Communities ─────────────────────────────────────────
 
   $scope.toggleJoin = function(comm) {
     if (!$scope.currentUser) {
@@ -286,7 +301,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     });
   };
 
-  // ─── UI helpers ──────────────────────────────
+  // ─── UI helpers ──────────────────────────────────────────
 
   $scope.setFeed = function(feed) {
     document.querySelectorAll('.sc-nav-item').forEach(el => el.classList.remove('active'));
