@@ -40,6 +40,17 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
       }
   };
 
+    <script>
+  function acceptCookies() {
+      localStorage.setItem('cookiesAccepted', 'true');
+      document.getElementById('cookieBanner').style.display = 'none';
+  }
+  // Hide if already accepted
+  if (localStorage.getItem('cookiesAccepted') === 'true') {
+      document.getElementById('cookieBanner').style.display = 'none';
+  }
+  </script>
+
   // ─── Auth token ──────────────────────────────────
   const token = localStorage.getItem('token');
   if (token) {
