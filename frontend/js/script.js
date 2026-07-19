@@ -31,11 +31,13 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
   };
 
   // ─── Cookie consent ─────────────────────────────
-  $scope.cookiesAccepted = localStorage.getItem('cookiesAccepted') === 'true';
-
   $scope.acceptCookies = function() {
-    localStorage.setItem('cookiesAccepted', 'true');
-    $scope.cookiesAccepted = true;
+      localStorage.setItem('cookiesAccepted', 'true');
+      $scope.cookiesAccepted = true;
+      // Force digest if needed (though Angular should handle it)
+      if (!$scope.$$phase && !$scope.$$destroyed) {
+          $scope.$apply();
+      }
   };
 
   // ─── Auth token ──────────────────────────────────

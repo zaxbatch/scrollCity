@@ -408,11 +408,11 @@
     </div> <!-- /ng-app -->
 
     <!-- ═══ COOKIE BANNER ═══ -->
-    <div class="sc-cookie-banner" id="cookieBanner" ng-if="!cookiesAccepted">
+    <div class="sc-cookie-banner" ng-show="!cookiesAccepted">
         <p><i class="fas fa-cookie-bite" style="color:#FACC0F; margin-right:0.5rem;"></i> We use cookies to improve your experience. By using this site, you agree to our use of cookies.</p>
         <div>
-            <button class="sc-btn" ng-click="acceptCookies()">Accept</button>
-            <button class="sc-btn sc-btn-outline-light" onclick="alert('Privacy policy will be added soon.')">Learn More</button>
+            <button type="button" class="sc-btn" ng-click="acceptCookies()">Accept</button>
+            <button type="button" class="sc-btn sc-btn-outline-light" onclick="alert('Privacy policy will be added soon.')">Learn More</button>
         </div>
     </div>
 
