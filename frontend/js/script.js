@@ -33,7 +33,13 @@ app.filter('youtubeEmbed', ['$sce', function($sce) {
 
 app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
 
-  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api';
+  // ─── UPDATED: Hardcode Render API URL ────────────────────────────────
+  // In production, use your Render backend URL.
+  // In development (localhost), use local server.
+  const API_BASE = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000/api' 
+    : 'https://scroll-city.onrender.com/api';
+  // ──────────────────────────────────────────────────────────────────────
 
   // Auth token
   const token = localStorage.getItem('token');
