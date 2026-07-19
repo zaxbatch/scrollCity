@@ -66,8 +66,8 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     }
 
     if (videoId && videoId.length === 11) {
-      // Muted autoplay (browsers allow autoplay only when muted)
-      return 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&mute=1';
+      // Muted autoplay + high quality (1080p if available)
+      return 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&mute=1&vq=hd1080';
     }
     return '';
   }
