@@ -330,7 +330,21 @@
             <div class="sc-modal-overlay" ng-click="closeLinkModal()"></div>
             <div class="sc-link-modal-content" ng-click="$event.stopPropagation()">
                 <button class="sc-link-modal-close" ng-click="closeLinkModal()">&times;</button>
-                <iframe ng-src="{{linkUrl}}" frameborder="0" allowfullscreen></iframe>
+                <!-- Iframe -->
+                <div class="sc-link-modal-iframe-wrapper">
+                    <iframe ng-src="{{linkUrl}}" frameborder="0" allowfullscreen></iframe>
+                </div>
+                <!-- Footer with button and disclaimer -->
+                <div class="sc-link-modal-footer">
+                    <button class="sc-btn sc-btn-gold" ng-click="openLinkInNewTab()">
+                        <i class="fas fa-external-link-alt"></i> Open in new tab
+                    </button>
+                    <p class="sc-link-modal-disclaimer">
+                        <i class="fas fa-info-circle"></i>
+                        Some websites may not display in the embedded viewer due to security restrictions. 
+                        If you see a blank page, click "Open in new tab" to view directly.
+                    </p>
+                </div>
             </div>
         </div>
 

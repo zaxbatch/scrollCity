@@ -133,6 +133,13 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
     $scope.linkUrl = '';
   };
 
+  // ─── Open link in new tab (added) ────────────────────
+  $scope.openLinkInNewTab = function() {
+    if ($scope.linkUrl) {
+      window.open($scope.linkUrl, '_blank');
+    }
+  };
+
   // ─── Share Post ──────────────────────────────────────
   $scope.sharePost = function(post) {
     const url = window.location.origin + '/?post=' + post._id;
