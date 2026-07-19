@@ -30,54 +30,50 @@ app.filter('youtubeEmbed', ['$sce', function($sce) {
   };
 }]);
 
-app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
+app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
 
-  // ─── API Base ──────────────────────────────────────────────
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
     : 'https://scroll-city.onrender.com/api';
 
-  // ─── Auth token ────────────────────────────────────────────
+  // ─── Auth token ────────────────────────────
   const token = localStorage.getItem('token');
   if (token) {
     $http.defaults.headers.common['Authorization'] = 'Bearer ' + token;
   }
 
-  // ─── State ──────────────────────────────────────────────────
+  // ─── State ──────────────────────────────────
   $scope.currentUser = null;
   $scope.feedPosts = [];
   $scope.communities = [];
-  $scope.trending = [];          // will be computed
+  $scope.trending = [];
   $scope.botSpotlight = [];
   $scope.botCount = 12;
+  $scope.notificationCount = 0;    // <-- NEW
   $scope.modalActive = false;
   $scope.modalMode = 'signup';
   $scope.signupData = { name: '', email: '', username: '', password: '' };
   $scope.loginData = { identifier: '', password: '' };
   $scope.newPost = { content: '', image: '', video: '' };
 
-  // ─── Helper: compute trending hashtags from posts ────────
+  // ─── Compute trending hashtags ─────────────
   function computeTrending(posts) {
     const hashtagCount = {};
     posts.forEach(p => {
-      // Find all #hashtags in the content
       const matches = p.content.match(/#[a-zA-Z0-9_]+/g) || [];
       matches.forEach(tag => {
         const lower = tag.toLowerCase();
         hashtagCount[lower] = (hashtagCount[lower] || 0) + 1;
       });
     });
-    // Sort by count descending, take top 5
     const sorted = Object.keys(hashtagCount)
       .map(tag => ({ hashtag: tag, count: hashtagCount[tag] }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
-    // Format count as "1.2K" etc. (keep simple)
     $scope.trending = sorted.map(t => ({
       hashtag: t.hashtag,
       count: t.count > 999 ? (t.count/1000).toFixed(1) + 'K' : String(t.count)
     }));
-    // If no trending, show fallback
     if ($scope.trending.length === 0) {
       $scope.trending = [
         { hashtag: '#LouisvilleRealEstate', count: '0' },
@@ -87,34 +83,48 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
     }
   }
 
-  // ─── Load current user ─────────────────────────────────────
+  // ─── Compute notification count ────────────
+  function computeNotifications(posts) {
+    if (!$scope.currentUser) return 0;
+    let count = 0;
+    posts.forEach(p => {
+      // If this post is by the current user
+      if (p.user === $scope.currentUser._id) {
+        // Likes on this post
+        count += p.likes.length || 0;
+        // Comments on this post
+        count += p.comments.length || 0;
+      }
+    });
+    return count;
+  }
+
+  // ─── Load current user ─────────────────────
   if (token) {
     $http.get(API_BASE + '/auth/me').then(res => {
       $scope.currentUser = res.data;
     }).catch(() => {
-      // Token invalid: clear it
       localStorage.removeItem('token');
       delete $http.defaults.headers.common['Authorization'];
     });
   }
 
-  // ─── Load feed ──────────────────────────────────────────────
+  // ─── Load feed ─────────────────────────────
   function loadFeed() {
     $http.get(API_BASE + '/posts').then(res => {
       $scope.feedPosts = res.data;
-      // mark liked status
       if ($scope.currentUser) {
         $scope.feedPosts.forEach(p => {
           p.liked = p.likes.includes($scope.currentUser._id);
         });
+        $scope.notificationCount = computeNotifications($scope.feedPosts);
       }
-      // Update trending hashtags
       computeTrending($scope.feedPosts);
     });
   }
   loadFeed();
 
-  // ─── Load communities ───────────────────────────────────────
+  // ─── Load communities ──────────────────────
   $http.get(API_BASE + '/communities').then(res => {
     $scope.communities = res.data;
     if ($scope.currentUser) {
@@ -124,38 +134,55 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
     }
   });
 
-  // ─── Bot spotlight ──────────────────────────────────────────
+  // ─── Bot spotlight ─────────────────────────
   $scope.botSpotlight = [
     { name: 'LouRealtyBot', avatar: 'https://robohash.org/lourealtybot?set=set4&size=100x100', snippet: 'Just listed 3BR in the Highlands! 🏡' },
     { name: 'KYMarketBot', avatar: 'https://robohash.org/kymarketbot?set=set4&size=100x100', snippet: 'Louisville home prices up 4.2% YoY 📈' }
   ];
 
-  // ─── Auth ────────────────────────────────────────────────────
+  // ─── AUTH ──────────────────────────────────
+
+  // Signup: called from ng-click on button (no form submit)
   $scope.submitSignup = function() {
-    $http.post(API_BASE + '/auth/signup', $scope.signupData).then(res => {
-      const data = res.data;
-      localStorage.setItem('token', data.token);
-      $http.defaults.headers.common['Authorization'] = 'Bearer ' + data.token;
-      $scope.currentUser = data.user;
+    const data = $scope.signupData;
+    if (!data.name || !data.email || !data.username || !data.password) {
+      alert('Please fill in all fields.');
+      return;
+    }
+    if (data.password.length < 8) {
+      alert('Password must be at least 8 characters.');
+      return;
+    }
+    $http.post(API_BASE + '/auth/signup', data).then(res => {
+      const result = res.data;
+      localStorage.setItem('token', result.token);
+      $http.defaults.headers.common['Authorization'] = 'Bearer ' + result.token;
+      $scope.currentUser = result.user;
       $scope.closeModal();
       $scope.signupData = { name: '', email: '', username: '', password: '' };
       loadFeed();
-      alert('Welcome ' + data.user.name + '!');
+      alert('Welcome ' + result.user.name + '!');
     }).catch(err => {
       alert(err.data.error || 'Signup failed');
     });
   };
 
+  // Login: called from ng-click
   $scope.submitLogin = function() {
-    $http.post(API_BASE + '/auth/login', $scope.loginData).then(res => {
-      const data = res.data;
-      localStorage.setItem('token', data.token);
-      $http.defaults.headers.common['Authorization'] = 'Bearer ' + data.token;
-      $scope.currentUser = data.user;
+    const data = $scope.loginData;
+    if (!data.identifier || !data.password) {
+      alert('Please enter your email/username and password.');
+      return;
+    }
+    $http.post(API_BASE + '/auth/login', data).then(res => {
+      const result = res.data;
+      localStorage.setItem('token', result.token);
+      $http.defaults.headers.common['Authorization'] = 'Bearer ' + result.token;
+      $scope.currentUser = result.user;
       $scope.closeModal();
       $scope.loginData = { identifier: '', password: '' };
       loadFeed();
-      alert('Welcome back ' + data.user.name + '!');
+      alert('Welcome back ' + result.user.name + '!');
     }).catch(err => {
       alert(err.data.error || 'Login failed');
     });
@@ -165,31 +192,52 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
     localStorage.removeItem('token');
     delete $http.defaults.headers.common['Authorization'];
     $scope.currentUser = null;
+    $scope.notificationCount = 0;
     loadFeed();
   };
 
-  // ─── Posts ───────────────────────────────────────────────────
+  // ─── Posts ─────────────────────────────────
   $scope.submitPost = function() {
+    if (!$scope.currentUser) {
+      alert('Please log in first.');
+      return;
+    }
     if (!$scope.newPost.content) return;
     $http.post(API_BASE + '/posts', $scope.newPost).then(res => {
       $scope.feedPosts.unshift(res.data);
       $scope.newPost = { content: '', image: '', video: '' };
       computeTrending($scope.feedPosts);
+      $scope.notificationCount = computeNotifications($scope.feedPosts);
     }).catch(err => alert('Error posting: ' + err.data.error));
   };
 
   $scope.toggleLike = function(post) {
+    if (!$scope.currentUser) {
+      alert('Please log in to like.');
+      return;
+    }
     $http.put(API_BASE + '/posts/' + post._id + '/like').then(res => {
       post.liked = res.data.liked;
       post.likes = res.data.likes;
+      // update notification count if post belongs to user
+      if (post.user === $scope.currentUser._id) {
+        $scope.notificationCount = computeNotifications($scope.feedPosts);
+      }
     });
   };
 
   $scope.addComment = function(post) {
+    if (!$scope.currentUser) {
+      alert('Please log in to comment.');
+      return;
+    }
     if (!post.newComment) return;
     $http.post(API_BASE + '/posts/' + post._id + '/comments', { text: post.newComment }).then(res => {
       post.comments.push(res.data);
       post.newComment = '';
+      if (post.user === $scope.currentUser._id) {
+        $scope.notificationCount = computeNotifications($scope.feedPosts);
+      }
     }).catch(err => alert('Comment failed'));
   };
 
@@ -210,15 +258,19 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
     if ($event.key === 'Enter') $scope.addComment(post);
   };
 
-  // ─── Communities ─────────────────────────────────────────────
+  // ─── Communities ────────────────────────────
   $scope.toggleJoin = function(comm) {
+    if (!$scope.currentUser) {
+      alert('Please log in to join communities.');
+      return;
+    }
     $http.post(API_BASE + '/communities/' + comm._id + '/join').then(res => {
       comm.joined = res.data.joined;
       comm.members = res.data.memberCount;
     });
   };
 
-  // ─── Feed switching (dummy) ──────────────────────────────────
+  // ─── Feed switching ─────────────────────────
   $scope.setFeed = function(feed) {
     document.querySelectorAll('.sc-nav-item').forEach(el => el.classList.remove('active'));
     const items = document.querySelectorAll('.sc-nav-item');
@@ -226,7 +278,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
     if (idx >= 0 && items[idx]) items[idx].classList.add('active');
   };
 
-  // ─── Modals ───────────────────────────────────────────────────
+  // ─── Modals ─────────────────────────────────
   $scope.openSignup = function() { $scope.modalMode = 'signup'; $scope.modalActive = true; };
   $scope.openLogin = function() { $scope.modalMode = 'login'; $scope.modalActive = true; };
   $scope.openProfile = function() {
@@ -249,8 +301,8 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
     if (icon) icon.classList.toggle('fa-eye');
   };
 
-  // ─── Periodic refresh ────────────────────────────────────────
+  // ─── Periodic refresh ──────────────────────
   $interval(() => {
     loadFeed();
-  }, 30000); // every 30s
+  }, 30000);
 });
