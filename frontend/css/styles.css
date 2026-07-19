@@ -34,10 +34,10 @@ body {
     color: var(--charcoal);
     background: #f4f1eb;
     min-height: 100vh;
-    padding-bottom: 50px; /* space for thin footer */
+    padding-bottom: 50px;
 }
 
-/* ── Header Banner (shared) ────────────────────── */
+/* ── Header Banner ──────────────────────────────── */
 .header-banner {
     background: linear-gradient(180deg, #f0ece6 0%, #ffffff 100%);
     padding: 1rem 2rem;
@@ -83,7 +83,7 @@ body {
     box-shadow: var(--shadow-gold);
 }
 
-/* ── Main Site Container (original) ────────────── */
+/* ── Main Site Container ────────────────────────── */
 .container {
     max-width: 1200px;
     margin: 2rem auto;
@@ -298,7 +298,7 @@ button[type="submit"]:hover {
     background: var(--gold);
 }
 
-/* ── Glow Menu (original) ───────────────────────── */
+/* ── Glow Menu ──────────────────────────────────── */
 .glow-menu {
     position: fixed;
     top: 20px;
@@ -417,7 +417,6 @@ button[type="submit"]:hover {
 }
 
 /* ── SCROLL-CITY LAYOUT ─────────────────────────── */
-
 .sc-main-wrapper {
     display: flex;
     max-width: 1400px;
@@ -1002,9 +1001,9 @@ button[type="submit"]:hover {
     }
     .sc-sidebar-toggle {
         position: fixed;
-        bottom: 80px;
-        right: 20px;
-        z-index: 9997;
+        top: 20px;          /* updated */
+        left: 20px;         /* updated */
+        z-index: 9999;
         background: #FACC0F;
         color: #1e1e1e;
         border: none;

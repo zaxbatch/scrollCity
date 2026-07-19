@@ -68,7 +68,7 @@
                 </div>
             </aside>
 
-            <!-- CENTER FEED (page switcher) -->
+            <!-- CENTER FEED -->
             <main class="sc-feed">
 
                 <div ng-switch="currentPage">
@@ -93,7 +93,7 @@
                             <p><i class="fas fa-lock" style="color:#FACC0F; margin-right:0.6rem;"></i> <a href="#" ng-click="openSignup()">Sign up</a> or <a href="#" ng-click="openLogin()">log in</a> to join the conversation.</p>
                         </div>
 
-                        <!-- Sort buttons -->
+                        <!-- Sort -->
                         <div class="sc-feed-sort">
                             <span class="sc-feed-sort-label" ng-class="{'active': sortMode === 'trending'}" ng-click="setSort('trending')">
                                 <i class="fas fa-fire"></i> Trending
@@ -126,12 +126,15 @@
                                             Watch on YouTube
                                         </span>
                                     </div>
+                                    <!-- Stats with Share Button -->
                                     <div class="sc-post-stats">
                                         <span><i class="fas fa-heart" ng-class="{'liked': post.liked}" ng-click="toggleLike(post)"></i> {{post.likes.length}}</span>
                                         <span><i class="fas fa-comment" ng-click="toggleComments(post)"></i> {{post.comments.length}}</span>
                                         <span><i class="fas fa-retweet"></i> {{post.shares || 0}}</span>
                                         <span><i class="fas fa-bookmark"></i></span>
+                                        <span><i class="fas fa-share-alt" ng-click="sharePost(post)"></i></span>
                                     </div>
+                                    <!-- Comments -->
                                     <div class="sc-comments" ng-if="post.showComments">
                                         <div class="sc-comment" ng-repeat="comment in post.comments">
                                             <div class="sc-comment-avatar">
@@ -153,6 +156,7 @@
                             </div>
                         </div>
 
+                        <!-- Bot Activity -->
                         <div class="sc-bot-activity">
                             <span><i class="fas fa-robot" style="color:#FACC0F;"></i> <span id="bot-count">{{botCount}}</span> bots active</span>
                             <span class="sc-bot-dot"></span>

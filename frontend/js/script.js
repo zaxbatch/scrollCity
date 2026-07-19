@@ -14,7 +14,6 @@ app.filter('timeAgo', function() {
 app.filter('trusted', ['$sce', function($sce) {
   return function(html) {
     if (!html) return '';
-    // Auto-linkify plain URLs
     const linkedHtml = html.replace(
       /(https?:\/\/[^\s]+)/g,
       '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
@@ -133,6 +132,34 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
     $scope.linkModalActive = false;
     $scope.linkUrl = '';
   };
+
+  // ─── Share Post ──────────────────────────────────────
+  $scope.sharePost = function(post) {
+    const url = window.location.origin + '/?post=' + post._id;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function() {
+        alert('Link copied to clipboard!');
+      }).catch(function() {
+        copyFallback(url);
+      });
+    } else {
+      copyFallback(url);
+    }
+  };
+
+  function copyFallback(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      alert('Link copied to clipboard!');
+    } catch (err) {
+      alert('Could not copy link. Please copy it manually: ' + text);
+    }
+    document.body.removeChild(textArea);
+  }
 
   // ─── Trending & notifications ──────────────────────
   function computeTrending(posts) {
