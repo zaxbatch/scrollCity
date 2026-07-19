@@ -15,7 +15,13 @@ app.filter('timeAgo', function() {
 
 app.filter('trusted', ['$sce', function($sce) {
   return function(html) {
-    return $sce.trustAsHtml(html);
+    if (!html) return '';
+    // Auto-linkify plain URLs
+    const linkedHtml = html.replace(
+      /(https?:\/\/[^\s]+)/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
+    return $sce.trustAsHtml(linkedHtml);
   };
 }]);
 
@@ -357,18 +363,14 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
   }, 30000);
 
   // ─── Intercept external links ────────────────────
-  // Use event delegation to catch clicks on external links
   function handleLinkClick(e) {
     const target = e.target.closest('a');
     if (!target) return;
     const href = target.getAttribute('href');
-    // Only intercept external links (http/https) and not if it's a javascript: or mailto: etc.
     if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
-      // Check if the link is inside a post (restrict to .sc-posts or .sc-post-content)
       if (target.closest('.sc-posts') || target.closest('.sc-post-content')) {
         e.preventDefault();
         $scope.openLinkModal(href);
-        // Trigger digest if needed
         if (!$scope.$$phase && !$scope.$$destroyed) {
           $scope.$apply();
         }
@@ -376,10 +378,8 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
     }
   }
 
-  // Attach the click listener using $document (Angular's wrapper)
   $document.on('click', handleLinkClick);
 
-  // Clean up the listener when the scope is destroyed
   $scope.$on('$destroy', function() {
     $document.off('click', handleLinkClick);
   });
