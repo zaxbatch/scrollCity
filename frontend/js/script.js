@@ -28,6 +28,20 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
     ? 'http://localhost:5000/api' 
     : 'https://scroll-city.onrender.com/api';
 
+  // ─── URL validators ──────────────────────────────────
+  function isValidImageUrl(url) {
+    if (!url) return true; // optional field
+    const imageExtensions = /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i;
+    return imageExtensions.test(url);
+  }
+
+  function isValidVideoUrl(url) {
+    if (!url) return true; // optional field
+    // YouTube patterns: watch, youtu.be, shorts, embed
+    const youtubeRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/embed\/)/i;
+    return youtubeRegex.test(url);
+  }
+
   // ─── Page state ──────────────────────────────────────
   $scope.currentPage = 'home';
   $scope.setPage = function(page) { $scope.currentPage = page; };
@@ -132,8 +146,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
     $scope.linkModalActive = false;
     $scope.linkUrl = '';
   };
-
-  // ─── Open link in new tab (added) ────────────────────
   $scope.openLinkInNewTab = function() {
     if ($scope.linkUrl) {
       window.open($scope.linkUrl, '_blank');
@@ -305,7 +317,23 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
       alert('Please log in first.');
       return;
     }
-    if (!$scope.newPost.content) return;
+    if (!$scope.newPost.content) {
+      alert('Please write some content.');
+      return;
+    }
+
+    // Validate image URL
+    if ($scope.newPost.image && !isValidImageUrl($scope.newPost.image)) {
+      alert('Please enter a valid image URL (e.g., .jpg, .png, .gif, .webp).');
+      return;
+    }
+
+    // Validate video URL
+    if ($scope.newPost.video && !isValidVideoUrl($scope.newPost.video)) {
+      alert('Please enter a valid YouTube URL (e.g., https://youtube.com/watch?v=...).');
+      return;
+    }
+
     $http.post(API_BASE + '/posts', $scope.newPost).then(res => {
       $scope.feedPosts.unshift(res.data);
       $scope.newPost = { content: '', image: '', video: '' };
