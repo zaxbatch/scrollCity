@@ -1,81 +1,150 @@
 const User = require('../models/User');
 const Post = require('../models/Post');
-const { randomInt } = require('crypto');
+const BotPersona = require('../models/BotPersona');
+const Listing = require('../models/Listing');
+const MarketStat = require('../models/MarketStat');
+const NewsItem = require('../models/NewsItem');
+const Event = require('../models/Event');
 
-const botDefs = [
-  { name: 'LouRealtyBot', username: 'lourealtybot', avatar: 'https://robohash.org/lourealtybot?set=set4&size=100x100' },
-  { name: 'KYMarketBot', username: 'kymarketbot', avatar: 'https://robohash.org/kymarketbot?set=set4&size=100x100' },
-  { name: 'NuLuDevBot', username: 'nuludevbot', avatar: 'https://robohash.org/nuludevbot?set=set4&size=100x100' },
-  { name: 'HighlandsAgent', username: 'highlandsagent', avatar: 'https://robohash.org/highlandsagent?set=set4&size=100x100' },
-  { name: 'KYInvestorBot', username: 'kyinvestorbot', avatar: 'https://robohash.org/kyinvestorbot?set=set4&size=100x100' },
-  { name: 'LouClosingBot', username: 'louclosingbot', avatar: 'https://robohash.org/louclosingbot?set=set4&size=100x100' },
-  { name: 'KYNewsBot', username: 'kynewsbot', avatar: 'https://robohash.org/kynewsbot?set=set4&size=100x100' },
-  { name: 'StMatthewsRE', username: 'stmatthewsre', avatar: 'https://robohash.org/stmatthewsre?set=set4&size=100x100' },
-  { name: 'LouRentalBot', username: 'lourentalbot', avatar: 'https://robohash.org/lourentalbot?set=set4&size=100x100' },
-  { name: 'KYHistoricBot', username: 'kyhistoricbot', avatar: 'https://robohash.org/kyhistoricbot?set=set4&size=100x100' },
-];
+// ─── Templates ──────────────────────────────────────────
+const listingTemplate = (listing) => {
+  return `🏡 Just listed: ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA at ${listing.address} for $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 80)}... <a href="#">View details</a> #LouisvilleRealEstate`;
+};
 
-const botTemplates = [
-  { content: 'Just listed: 3BR/2BA in the Highlands! 🏡 <a href="#">#LouisvilleRealEstate</a>' },
-  { content: 'Market update: Louisville home prices up 4.2% year-over-year 📈 <a href="#">#KYRealEstate</a>' },
-  { content: 'New commercial development coming to NuLu! 🏗️ 12 luxury condos + retail space. <a href="#">#NuLu</a>' },
-  { content: 'Open house this Sunday at 1234 Bardstown Rd. Come see this beautiful colonial! ☕ <a href="#">#OpenHouse</a>' },
-  { content: 'Thinking of selling? Average time on market in Louisville is now 28 days. 📊 <a href="#">#SellWithConfidence</a>' },
-  { content: 'Just closed on a gorgeous property in Crescent Hill. Congrats to the buyers! 🎉 <a href="#">#DreamHome</a>' },
-  { content: 'Louisville named top 10 emerging real estate markets in the Midwest. 🌟 <a href="#">#KentuckyProud</a>' },
-  { content: 'Don\'t miss this 4BR/3BA with a pool in St. Matthews! 🏊 <a href="#">#LuxuryLiving</a>' },
-  { content: 'New rental listings in Clifton: 2BR from $1,200/mo. Pet-friendly! 🐾 <a href="#">#LouisvilleRentals</a>' },
-  { content: 'Old Louisville historic home tour this weekend! 12 Victorian beauties open. 🏛️ <a href="#">#OldLouisville</a>' },
-];
+const statTemplate = (stat) => {
+  return `📊 ${stat.metric} in ${stat.region}: ${stat.value}. ${stat.source} ${stat.date ? 'as of ' + new Date(stat.date).toLocaleDateString() : ''} <a href="#">#KYMarket</a>`;
+};
 
-function getRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+const newsTemplate = (news) => {
+  return `📰 ${news.headline}: ${news.summary.slice(0, 100)}... ${news.link ? `<a href="${news.link}">Read more</a>` : ''} #KYNews`;
+};
 
-async function ensureBotUsers() {
-  for (const bot of botDefs) {
-    const exists = await User.findOne({ username: bot.username });
-    if (!exists) {
-      await User.create({
-        name: bot.name,
-        username: bot.username,
-        email: bot.username + '@scroll.city',
-        password: 'botpassword', // will be hashed
-        avatar: bot.avatar,
-        isBot: true
-      });
+const eventTemplate = (event) => {
+  return `📅 ${event.title} – ${event.description?.slice(0, 60)}... ${event.startDate ? 'Starts ' + new Date(event.startDate).toLocaleDateString() : ''} <a href="#">#Event</a>`;
+};
+
+// ─── Pick a random item from a collection ──────────────
+async function getRandomItem(model, filter = {}) {
+  const count = await model.countDocuments(filter);
+  if (count === 0) return null;
+  const random = Math.floor(Math.random() * count);
+  return await model.findOne(filter).skip(random);
+}
+
+// ─── Main bot posting function ─────────────────────────
+async function postFromBot(botUsername) {
+  const botUser = await User.findOne({ username: botUsername, isBot: true });
+  if (!botUser) throw new Error('Bot not found');
+
+  // Determine niche
+  const niche = botUser.botNiche || 'General';
+
+  let postContent = '';
+  let image = '';
+  let video = '';
+
+  // Pick data based on niche
+  switch (niche) {
+    case 'Finance':
+      const stat = await getRandomItem(MarketStat, { category: 'Economic' });
+      if (stat) {
+        postContent = statTemplate(stat);
+      }
+      break;
+    case 'Market Data':
+      const stat2 = await getRandomItem(MarketStat, { category: 'Price' });
+      if (stat2) {
+        postContent = statTemplate(stat2);
+      }
+      break;
+    case 'Construction':
+      const newsItem = await getRandomItem(NewsItem, { category: 'Development' });
+      if (newsItem) {
+        postContent = newsTemplate(newsItem);
+      }
+      break;
+    case 'Neighborhood':
+      const event = await getRandomItem(Event, { type: 'Community Meeting' });
+      if (event) {
+        postContent = eventTemplate(event);
+      }
+      break;
+    case 'Investment':
+      const listing = await getRandomItem(Listing, { propertyType: 'Multi-Family' });
+      if (listing) {
+        postContent = listingTemplate(listing);
+        image = listing.images?.[0] || '';
+      }
+      break;
+    default: // General
+      const randomChoice = Math.random();
+      if (randomChoice < 0.4) {
+        const l = await getRandomItem(Listing);
+        if (l) {
+          postContent = listingTemplate(l);
+          image = l.images?.[0] || '';
+        }
+      } else if (randomChoice < 0.7) {
+        const s = await getRandomItem(MarketStat);
+        if (s) postContent = statTemplate(s);
+      } else {
+        const n = await getRandomItem(NewsItem);
+        if (n) postContent = newsTemplate(n);
+      }
+      break;
+  }
+
+  // If no content found, fallback to a generic post
+  if (!postContent) {
+    postContent = `📢 ${botUser.name} is here! Follow for the latest Kentucky real estate insights. #ScrollCity`;
+  }
+
+  // Create post
+  const post = await Post.create({
+    user: botUser._id,
+    userName: botUser.name,
+    userHandle: botUser.username,
+    userAvatar: botUser.avatar,
+    content: postContent,
+    image: image || '',
+    video: video || '',
+    isBot: true
+  });
+
+  // Update lastPostAt for the bot persona
+  await BotPersona.findOneAndUpdate(
+    { username: botUsername },
+    { lastPostAt: new Date() },
+    { upsert: true }
+  );
+
+  return post;
+}
+
+// ─── Scheduler ──────────────────────────────────────────
+async function runBotScheduler() {
+  const bots = await BotPersona.find({ active: true });
+  for (const bot of bots) {
+    const now = new Date();
+    const last = bot.lastPostAt || new Date(0);
+    const minutesSince = (now - last) / (1000 * 60);
+    if (minutesSince >= bot.postFrequency) {
+      try {
+        await postFromBot(bot.username);
+        console.log(`✅ Bot ${bot.username} posted at ${now.toISOString()}`);
+      } catch (err) {
+        console.error(`❌ Bot ${bot.username} failed:`, err.message);
+      }
     }
   }
 }
 
-async function postBotMessage() {
-  const botDef = getRandom(botDefs);
-  const template = getRandom(botTemplates);
-  const user = await User.findOne({ username: botDef.username });
-  if (!user) return;
-
-  // Check if last bot post was too recent (avoid duplicates)
-  const lastPost = await Post.findOne({ isBot: true }).sort({ createdAt: -1 });
-  if (lastPost && (Date.now() - lastPost.createdAt.getTime() < 8000)) return;
-
-  await Post.create({
-    user: user._id,
-    userName: user.name,
-    userHandle: user.username,
-    userAvatar: user.avatar,
-    content: template.content,
-    isBot: true,
-    image: Math.random() > 0.7 ? 'https://picsum.photos/seed/' + Date.now() + '/600/400' : '',
-    video: ''
-  });
-}
-
+// ─── Start scheduler ──────────────────────────────────
 function startBotService() {
-  ensureBotUsers().then(() => {
-    // Post immediately, then every 10-20 seconds
-    postBotMessage();
-    setInterval(() => {
-      postBotMessage().catch(err => console.error('Bot error:', err));
-    }, randomInt(10000, 20000));
-  });
+  // Run every minute
+  setInterval(runBotScheduler, 60000);
+  // Also run immediately
+  setTimeout(runBotScheduler, 5000);
 }
 
-module.exports = startBotService;
+module.exports = { startBotService, postFromBot };

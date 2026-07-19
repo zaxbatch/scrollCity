@@ -7,9 +7,11 @@ const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
+// Routes
 const authRoutes = require('./routes/authRoutes');
 const postRoutes = require('./routes/postRoutes');
 const communityRoutes = require('./routes/communityRoutes');
+const adminRoutes = require('./routes/adminRoutes');  // <-- added
 
 const app = express();
 
@@ -58,6 +60,7 @@ app.use('/api', limiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/communities', communityRoutes);
+app.use('/api/admin', adminRoutes);   // <-- admin routes
 
 // ─── Health check ────────────────────────────────
 app.get('/health', (req, res) => {
