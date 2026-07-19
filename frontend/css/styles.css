@@ -1,0 +1,544 @@
+/* styles.css – Professional Gold & Charcoal Theme with Fading Header/Footer */
+:root {
+    --gold: #FACC0F;
+    --gold-dark: #d4a800;
+    --gold-light: #fde68a;
+    --gold-subtle: #fcf6e8;
+    --charcoal: #1e1e1e;
+    --charcoal-soft: #2c2c2c;
+    --accent: #7D6607;
+    --light: #ffffff;
+    --cream: #faf8f5;
+    --gray-light: #f0ede8;
+    --gray-medium: #e2ddd6;
+    --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    --shadow-gold: 0 8px 30px rgba(250, 204, 15, 0.2);
+    --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --border-radius: 14px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    color: var(--charcoal);
+    background: var(--cream);
+    min-height: 100vh;
+}
+
+/* Header Banner – Vertical fade: darker warm tone at top → white at bottom */
+.header-banner {
+    background: linear-gradient(180deg, #f0ece6 0%, #ffffff 100%);
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.04);
+    position: relative;
+    z-index: 100;
+    border-bottom: 2px solid var(--gold);
+}
+
+.social-links {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* LOGOS: NO FILTERS – Keeping them exactly as-is */
+.header-logo {
+    height: 35px;
+    width: auto;
+    transition: var(--transition);
+}
+
+.social-links a {
+    color: var(--charcoal);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+    padding: 0.5rem 1.2rem;
+    border-radius: 30px;
+    background: rgba(0, 0, 0, 0.02);
+    font-weight: 500;
+    font-size: 0.95rem;
+    border: 1px solid transparent;
+}
+
+.social-links a:hover {
+    background: rgba(250, 204, 15, 0.12);
+    border-color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-gold);
+}
+
+/* Main Container */
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+/* Header – Gold accent with subtle glow */
+.header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 3.5rem 2rem;
+    background: var(--light);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(250, 204, 15, 0.15);
+    position: relative;
+}
+
+.header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20%;
+    width: 60%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    border-radius: 2px;
+}
+
+.header h1 {
+    font-size: 2.8rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    color: var(--charcoal);
+}
+
+.header h1 span {
+    color: var(--gold-dark);
+    background: linear-gradient(135deg, var(--gold-dark), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.header p {
+    font-size: 1.2rem;
+    color: #666;
+    font-weight: 400;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Service Buttons – Clean cards, gold on active/hover */
+.service-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.service-buttons button {
+    padding: 1.5rem 2rem;
+    border: none;
+    border-radius: var(--border-radius);
+    background: var(--light);
+    color: var(--charcoal);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid var(--gray-medium);
+    box-shadow: var(--shadow);
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    background: var(--light);
+}
+
+.service-buttons button:hover {
+    transform: translateY(-4px);
+    border-color: var(--gold);
+    box-shadow: var(--shadow-gold);
+    background: #fffdf7;
+}
+
+.service-buttons button.active {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: var(--charcoal);
+    border-color: var(--gold);
+    box-shadow: var(--shadow-gold);
+}
+
+.service-buttons button.active i {
+    color: var(--charcoal);
+}
+
+/* Content Sections – Clean typography */
+.content {
+    background: var(--light);
+    border-radius: var(--border-radius);
+    padding: 2.5rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+    border: 1px solid var(--gray-light);
+    transition: var(--transition);
+}
+
+.content:hover {
+    border-color: var(--gold-subtle);
+    box-shadow: 0 8px 35px rgba(0, 0, 0, 0.06);
+}
+
+.content section {
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+
+.content section.active {
+    display: block;
+}
+
+.content h2 {
+    color: var(--charcoal);
+    margin-bottom: 1.5rem;
+    font-size: 1.9rem;
+    border-bottom: 3px solid var(--gold);
+    padding-bottom: 0.8rem;
+    display: inline-block;
+    font-weight: 600;
+}
+
+.content p {
+    margin-bottom: 1.2rem;
+    line-height: 1.8;
+    font-size: 1.05rem;
+    color: #444;
+}
+
+/* CTA Buttons – Solid gold */
+.cta {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: var(--charcoal);
+    padding: 1rem 2.5rem;
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 1rem;
+    box-shadow: var(--shadow-gold);
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.cta:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(250, 204, 15, 0.35);
+    background: var(--gold);
+}
+
+/* Contact Form */
+#contact-form {
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+#contact-form.active { display: block; }
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+label {
+    font-weight: 600;
+    color: var(--charcoal);
+    margin-bottom: 0.3rem;
+    display: block;
+}
+
+input, select, textarea {
+    padding: 0.9rem 1.2rem;
+    border: 2px solid var(--gray-medium);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: var(--transition);
+    background: var(--cream);
+    width: 100%;
+    font-family: inherit;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(250, 204, 15, 0.1);
+    background: var(--light);
+}
+
+button[type="submit"] {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: var(--charcoal);
+    padding: 1.2rem;
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 0.5rem;
+    font-size: 1.1rem;
+    box-shadow: var(--shadow-gold);
+}
+
+button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(250, 204, 15, 0.3);
+    background: var(--gold);
+}
+
+/* Footer – Vertical fade: darker warm tone at top → white at bottom */
+footer {
+    background: linear-gradient(180deg, #f0ece6 0%, #ffffff 100%);
+    color: var(--charcoal);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    margin-top: 4rem;
+    border-top: 3px solid var(--gold);
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+/* LOGOS: NO FILTERS – Keeping them exactly as-is */
+.footer-logo, .realtor-logo {
+    height: 50px;
+    width: auto;
+}
+
+.brokerage-info {
+    text-align: center;
+    flex: 1;
+}
+
+.brokerage-info p {
+    margin-bottom: 0.3rem;
+    color: #555;
+}
+
+.brokerage-info strong {
+    color: var(--gold-dark);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Enhanced Glowing Expandable Menu – Sophisticated dark overlay */
+.glow-menu {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+}
+
+/* Keep fixed positioning */
+@media (min-width: 769px) { .glow-menu { left: 20px; } }
+@media (min-width: 1024px) { .glow-menu { left: 20px; } }
+@media (min-width: 1101px) { .glow-menu { left: 20px; } }
+@media (min-width: 1400px) { .glow-menu { left: 20px; } }
+@media (min-width: 1600px) { .glow-menu { left: 20px; } }
+@media (min-width: 1800px) { .glow-menu { left: 20px; } }
+@media (min-width: 2000px) { .glow-menu { left: 20px; } }
+
+.menu-icon {
+    width: 58px;
+    height: 58px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 25px rgba(250, 204, 15, 0.35);
+    transition: var(--transition);
+    position: relative;
+    z-index: 1002;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.menu-icon:hover {
+    transform: scale(1.06);
+    box-shadow: 0 8px 35px rgba(250, 204, 15, 0.5);
+}
+
+.menu-icon.active {
+    transform: rotate(90deg);
+}
+
+.menu-icon i {
+    color: var(--charcoal);
+    font-size: 1.4rem;
+}
+
+/* Menu Overlay – Elegant dark with gold glow */
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(20, 20, 20, 0.97);
+    backdrop-filter: blur(12px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.menu-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 30% 20%, rgba(250, 204, 15, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(250, 204, 15, 0.04) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.menu-content {
+    text-align: center;
+    transform: translateY(-20px) scale(0.96);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.menu-overlay.active .menu-content {
+    transform: translateY(0) scale(1);
+}
+
+.menu-content a {
+    display: block;
+    color: #e0dcd5;
+    text-decoration: none;
+    font-size: 2rem;
+    margin: 1.2rem 0;
+    padding: 0.6rem 3rem;
+    transition: var(--transition);
+    border-radius: 50px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    position: relative;
+}
+
+.menu-content a::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background: var(--gold);
+    transition: var(--transition);
+    transform: translateX(-50%);
+}
+
+.menu-content a:hover {
+    color: var(--gold);
+    transform: translateX(6px);
+    background: rgba(250, 204, 15, 0.06);
+}
+
+.menu-content a:hover::after {
+    width: 40%;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container { padding: 1rem; margin: 1rem auto; }
+    .header { padding: 2rem 1.5rem; }
+    .header h1 { font-size: 2.2rem; }
+    .header p { font-size: 1rem; }
+    .service-buttons { grid-template-columns: 1fr; gap: 1rem; }
+    .service-buttons button { padding: 1.2rem; font-size: 1rem; }
+    .content { padding: 1.5rem; }
+    .content h2 { font-size: 1.5rem; }
+    .footer-content { flex-direction: column; gap: 1.5rem; }
+    .menu-content a { font-size: 1.6rem; padding: 0.5rem 2rem; margin: 0.8rem 0; }
+    .glow-menu { top: 15px; left: 15px; }
+    .menu-icon { width: 50px; height: 50px; }
+    .menu-icon i { font-size: 1.2rem; }
+    .header-banner { padding: 0.8rem 1rem; }
+    .social-links { flex-direction: column; gap: 0.8rem; }
+    .header-logo { height: 30px; }
+    .social-links a { padding: 0.4rem 1rem; font-size: 0.85rem; }
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+    .social-links { padding-left: 80px; }
+    .header-logo { height: 32px; margin-right: auto; }
+}
+
+@media (min-width: 1101px) {
+    .social-links { padding-left: 90px; }
+    .header-logo { margin-right: auto; }
+}
+
+@media (max-width: 480px) {
+    .header h1 { font-size: 1.8rem; }
+    .content h2 { font-size: 1.3rem; }
+    .cta { padding: 0.9rem 1.5rem; font-size: 0.95rem; width: 100%; justify-content: center; }
+    footer { padding: 1.5rem 1rem; }
+    .footer-logo, .realtor-logo { height: 38px; }
+}
+
+@media (min-width: 1600px) {
+    .container { max-width: 1400px; }
+    .footer-content { max-width: 1400px; }
+}
+
+/* Utility Classes */
+.text-center { text-align: center; }
+.mt-2 { margin-top: 2rem; }
+.mb-2 { margin-bottom: 2rem; }
+.p-3 { padding: 1.5rem; }
+
+/* Card Component – Premium subtle card */
+.card {
+    background: var(--light);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-light);
+    transition: var(--transition);
+}
+
+.card:hover {
+    border-color: var(--gold);
+    box-shadow: var(--shadow-gold);
+}
