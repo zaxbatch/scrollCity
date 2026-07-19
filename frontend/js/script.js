@@ -23,6 +23,22 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     ? 'http://localhost:5000/api' 
     : 'https://scroll-city.onrender.com/api';
 
+  // ─── Page state ──────────────────────────────────
+  $scope.currentPage = 'home';  // home, explore, notifications, communities, profile
+
+  $scope.setPage = function(page) {
+    $scope.currentPage = page;
+  };
+
+  // ─── Cookie consent ─────────────────────────────
+  $scope.cookiesAccepted = localStorage.getItem('cookiesAccepted') === 'true';
+
+  $scope.acceptCookies = function() {
+    localStorage.setItem('cookiesAccepted', 'true');
+    $scope.cookiesAccepted = true;
+  };
+
+  // ─── Auth token ──────────────────────────────────
   const token = localStorage.getItem('token');
   if (token) {
     $http.defaults.headers.common['Authorization'] = 'Bearer ' + token;
@@ -41,32 +57,24 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
   $scope.loginData = { identifier: '', password: '' };
   $scope.newPost = { content: '', image: '', video: '' };
 
-  // ─── Video modal ──────────────────────────────
+  // ─── Video modal ──────────────────────────────────
   $scope.videoModalActive = false;
   $scope.videoEmbedUrl = '';
 
   function getYoutubeEmbedUrl(url) {
     if (!url) return '';
     let videoId = null;
-
-    // Normal watch
     let match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^#&?]*)/);
     if (match && match[1]) videoId = match[1];
-
-    // Shorts
     if (!videoId) {
       match = url.match(/youtube\.com\/shorts\/([^#&?]*)/);
       if (match && match[1]) videoId = match[1];
     }
-
-    // Embed
     if (!videoId) {
       match = url.match(/youtube\.com\/embed\/([^#&?]*)/);
       if (match && match[1]) videoId = match[1];
     }
-
     if (videoId && videoId.length === 11) {
-      // Muted autoplay + high quality (1080p if available)
       return 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&mute=1&vq=hd1080';
     }
     return '';
@@ -219,6 +227,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     $scope.currentUser = null;
     $scope.notificationCount = 0;
     loadFeed();
+    $scope.setPage('home');  // return to home on logout
   };
 
   // ─── Posts ──────────────────────────────────────
@@ -295,13 +304,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
   };
 
   // ─── UI helpers ──────────────────────────────
-  $scope.setFeed = function(feed) {
-    document.querySelectorAll('.sc-nav-item').forEach(el => el.classList.remove('active'));
-    const items = document.querySelectorAll('.sc-nav-item');
-    const idx = ['home', 'explore', 'communities', 'notifications', 'profile'].indexOf(feed);
-    if (idx >= 0 && items[idx]) items[idx].classList.add('active');
-  };
-
   $scope.openSignup = function() { $scope.modalMode = 'signup'; $scope.modalActive = true; };
   $scope.openLogin = function() { $scope.modalMode = 'login'; $scope.modalActive = true; };
   $scope.openProfile = function() {
