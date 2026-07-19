@@ -49,7 +49,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
   $scope.trending = [];
   $scope.botSpotlight = [];
   $scope.botCount = 12;
-  $scope.notificationCount = 0;    // <-- NEW
+  $scope.notificationCount = 0;
   $scope.modalActive = false;
   $scope.modalMode = 'signup';
   $scope.signupData = { name: '', email: '', username: '', password: '' };
@@ -88,11 +88,8 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     if (!$scope.currentUser) return 0;
     let count = 0;
     posts.forEach(p => {
-      // If this post is by the current user
       if (p.user === $scope.currentUser._id) {
-        // Likes on this post
         count += p.likes.length || 0;
-        // Comments on this post
         count += p.comments.length || 0;
       }
     });
@@ -142,7 +139,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
 
   // ─── AUTH ──────────────────────────────────
 
-  // Signup: called from ng-click on button (no form submit)
   $scope.submitSignup = function() {
     const data = $scope.signupData;
     if (!data.name || !data.email || !data.username || !data.password) {
@@ -167,7 +163,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     });
   };
 
-  // Login: called from ng-click
   $scope.submitLogin = function() {
     const data = $scope.loginData;
     if (!data.identifier || !data.password) {
@@ -219,7 +214,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     $http.put(API_BASE + '/posts/' + post._id + '/like').then(res => {
       post.liked = res.data.liked;
       post.likes = res.data.likes;
-      // update notification count if post belongs to user
       if (post.user === $scope.currentUser._id) {
         $scope.notificationCount = computeNotifications($scope.feedPosts);
       }
