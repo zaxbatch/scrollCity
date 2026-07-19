@@ -23,6 +23,54 @@ const CTAS = [
   '🔄 Market moving fast – don’t wait too long!'
 ];
 
+// ─── Pexels image fetcher ─────────────────────────────────────
+let imageCache = {};
+let cacheTimeout = 5 * 60 * 1000; // 5 minutes
+
+async function fetchPexelsImage(query) {
+  // Check cache first
+  const cacheKey = query.toLowerCase().trim();
+  if (imageCache[cacheKey] && (Date.now() - imageCache[cacheKey].timestamp < cacheTimeout)) {
+    return imageCache[cacheKey].url;
+  }
+
+  const apiKey = process.env.PEXELS_API_KEY;
+  if (!apiKey) {
+    console.warn('⚠️ PEXELS_API_KEY not set – skipping Pexels images');
+    return null;
+  }
+
+  try {
+    const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=15&page=${Math.floor(Math.random() * 5) + 1}`;
+    const response = await fetch(url, {
+      headers: { 'Authorization': apiKey }
+    });
+
+    if (!response.ok) {
+      console.warn(`⚠️ Pexels API error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    if (data.photos && data.photos.length > 0) {
+      const photo = random(data.photos);
+      const imageUrl = photo.src.medium || photo.src.large || photo.src.original;
+      
+      // Cache the result
+      imageCache[cacheKey] = {
+        url: imageUrl,
+        timestamp: Date.now()
+      };
+      
+      return imageUrl;
+    }
+    return null;
+  } catch (error) {
+    console.error('❌ Pexels fetch error:', error.message);
+    return null;
+  }
+}
+
 // ─── Listing Templates ────────────────────────────────────────
 const listingTemplates = [
   (listing) => `🏡 New listing alert! ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA at ${listing.address} for $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 80)}... ${random(CTAS)} #LouisvilleRealEstate`,
@@ -66,6 +114,29 @@ const conversationStarters = [
   `💬 What's the best part of living in Louisville? ${random(CTAS)}`
 ];
 
+// ─── Map content type to Pexels search query ──────────────────
+function getPexelsQuery(dataItem, type) {
+  if (type === 'listing') {
+    const keywords = ['house', 'home', 'real estate', 'property'];
+    if (dataItem.address) {
+      const parts = dataItem.address.split(' ');
+      const street = parts.slice(0, 2).join(' ');
+      keywords.unshift(street);
+    }
+    return random(keywords);
+  }
+  if (type === 'stat') {
+    return random(['city', 'skyline', 'downtown', 'urban', 'buildings']);
+  }
+  if (type === 'news') {
+    return random(['city', 'news', 'development', 'construction']);
+  }
+  if (type === 'event') {
+    return random(['people', 'meeting', 'community', 'event']);
+  }
+  return 'louisville';
+}
+
 // ─── Pick data ─────────────────────────────────────────────────
 async function getRandomItem(model, filter = {}) {
   const count = await model.countDocuments(filter);
@@ -83,10 +154,12 @@ async function postFromBot(botUsername) {
   let postContent = '';
   let image = '';
   let video = '';
+  let dataType = '';
 
-  // 20% chance to post a conversation starter (just for variety)
+  // 15% chance to post a conversation starter
   if (Math.random() < 0.15) {
     postContent = random(conversationStarters);
+    dataType = 'conversation';
   } else {
     // Pick data based on niche
     let dataItem = null;
@@ -96,35 +169,35 @@ async function postFromBot(botUsername) {
     switch (niche) {
       case 'Finance':
         dataItem = await getRandomItem(MarketStat, { category: 'Economic' });
-        if (dataItem) templateSet = statTemplates;
+        if (dataItem) { templateSet = statTemplates; type = 'stat'; }
         break;
       case 'Market Data':
         dataItem = await getRandomItem(MarketStat, { category: 'Price' });
-        if (dataItem) templateSet = statTemplates;
+        if (dataItem) { templateSet = statTemplates; type = 'stat'; }
         break;
       case 'Construction':
         dataItem = await getRandomItem(NewsItem, { category: 'Development' });
-        if (dataItem) templateSet = newsTemplates;
+        if (dataItem) { templateSet = newsTemplates; type = 'news'; }
         break;
       case 'Neighborhood':
         dataItem = await getRandomItem(Event, { type: 'Community Meeting' });
-        if (dataItem) templateSet = eventTemplates;
+        if (dataItem) { templateSet = eventTemplates; type = 'event'; }
         break;
       case 'Investment':
         dataItem = await getRandomItem(Listing, { propertyType: 'Multi-Family' });
-        if (dataItem) templateSet = listingTemplates;
+        if (dataItem) { templateSet = listingTemplates; type = 'listing'; }
         break;
       default: // General
         const rand = Math.random();
         if (rand < 0.35) {
           dataItem = await getRandomItem(Listing);
-          if (dataItem) templateSet = listingTemplates;
+          if (dataItem) { templateSet = listingTemplates; type = 'listing'; }
         } else if (rand < 0.65) {
           dataItem = await getRandomItem(MarketStat);
-          if (dataItem) templateSet = statTemplates;
+          if (dataItem) { templateSet = statTemplates; type = 'stat'; }
         } else {
           dataItem = await getRandomItem(NewsItem);
-          if (dataItem) templateSet = newsTemplates;
+          if (dataItem) { templateSet = newsTemplates; type = 'news'; }
         }
         break;
     }
@@ -132,16 +205,34 @@ async function postFromBot(botUsername) {
     if (dataItem && templateSet) {
       const template = random(templateSet);
       postContent = template(dataItem);
-      // If it's a listing, grab the first image if available
+      dataType = type;
+      
+      // If it's a listing, use its first image if available
       if (dataItem.images && dataItem.images.length > 0) {
         image = dataItem.images[0];
       }
     }
   }
 
-  // If still no content, fallback to a generic post
+  // If no content, fallback
   if (!postContent) {
     postContent = `👋 ${botUser.name} here! Follow me for the latest Louisville real estate insights. ${random(CTAS)} #ScrollCity`;
+    dataType = 'fallback';
+  }
+
+  // ─── Fetch a Pexels image (35% chance, only if no image already) ──
+  if (!image && Math.random() < 0.35) {
+    let query = 'louisville';
+    if (dataType === 'listing') query = 'house';
+    else if (dataType === 'stat') query = 'city';
+    else if (dataType === 'news') query = 'city';
+    else if (dataType === 'event') query = 'people';
+    else if (dataType === 'conversation') query = 'community';
+    
+    const pexelsImage = await fetchPexelsImage(query);
+    if (pexelsImage) {
+      image = pexelsImage;
+    }
   }
 
   // Create the post
@@ -186,9 +277,7 @@ async function runBotScheduler() {
 
 // ─── Start scheduler ──────────────────────────────────────────
 function startBotService() {
-  // Run every 60 seconds
   setInterval(runBotScheduler, 60000);
-  // Also run immediately
   setTimeout(runBotScheduler, 5000);
 }
 
