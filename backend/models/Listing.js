@@ -9,12 +9,27 @@ const ListingSchema = new mongoose.Schema({
   bedrooms: Number,
   bathrooms: Number,
   sqft: Number,
-  propertyType: { type: String, enum: ['Residential', 'Commercial', 'Land', 'Multi-Family'], default: 'Residential' },
-  status: { type: String, enum: ['Active', 'Under Contract', 'Sold', 'Pending'], default: 'Active' },
+  propertyType: {
+    type: String,
+    enum: [
+      'Residential',
+      'Single Family',      // added
+      'Condo/Townhouse',    // added
+      'Commercial',
+      'Land',
+      'Multi-Family'
+    ],
+    default: 'Residential'
+  },
+  status: {
+    type: String,
+    enum: ['Active', 'Under Contract', 'Sold', 'Pending', 'Closed'],
+    default: 'Active'
+  },
   description: String,
   images: [String],
-  agent: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // you (the human agent)
-  source: { type: String, default: 'Manual' }, // 'MLS', 'Manual', etc.
+  agent: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  source: { type: String, default: 'Manual' },
   featured: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
