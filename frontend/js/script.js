@@ -21,7 +21,6 @@ app.filter('trusted', ['$sce', function($sce) {
 app.filter('youtubeEmbed', ['$sce', function($sce) {
   return function(url) {
     if (!url) return '';
-    // Extract video ID
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
     if (match && match[2].length === 11) {
@@ -33,29 +32,22 @@ app.filter('youtubeEmbed', ['$sce', function($sce) {
 
 app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
 
-  // ─── UPDATED: Hardcode Render API URL ────────────────────────────────
-  // In production, use your Render backend URL.
-  // In development (localhost), use local server.
+  // ─── API Base ──────────────────────────────────────────────
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
     : 'https://scroll-city.onrender.com/api';
-  // ──────────────────────────────────────────────────────────────────────
 
-  // Auth token
+  // ─── Auth token ────────────────────────────────────────────
   const token = localStorage.getItem('token');
   if (token) {
     $http.defaults.headers.common['Authorization'] = 'Bearer ' + token;
   }
 
-  // State
+  // ─── State ──────────────────────────────────────────────────
   $scope.currentUser = null;
   $scope.feedPosts = [];
   $scope.communities = [];
-  $scope.trending = [
-    { hashtag: '#LouisvilleRealEstate', count: '1.2K' },
-    { hashtag: '#NuLuDevelopment', count: '847' },
-    { hashtag: '#HighlandsLiving', count: '623' },
-  ];
+  $scope.trending = [];          // will be computed
   $scope.botSpotlight = [];
   $scope.botCount = 12;
   $scope.modalActive = false;
@@ -64,14 +56,49 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
   $scope.loginData = { identifier: '', password: '' };
   $scope.newPost = { content: '', image: '', video: '' };
 
-  // Load user
-  $http.get(API_BASE + '/auth/me').then(res => {
-    $scope.currentUser = res.data;
-  }).catch(() => {
-    // Not logged in
-  });
+  // ─── Helper: compute trending hashtags from posts ────────
+  function computeTrending(posts) {
+    const hashtagCount = {};
+    posts.forEach(p => {
+      // Find all #hashtags in the content
+      const matches = p.content.match(/#[a-zA-Z0-9_]+/g) || [];
+      matches.forEach(tag => {
+        const lower = tag.toLowerCase();
+        hashtagCount[lower] = (hashtagCount[lower] || 0) + 1;
+      });
+    });
+    // Sort by count descending, take top 5
+    const sorted = Object.keys(hashtagCount)
+      .map(tag => ({ hashtag: tag, count: hashtagCount[tag] }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+    // Format count as "1.2K" etc. (keep simple)
+    $scope.trending = sorted.map(t => ({
+      hashtag: t.hashtag,
+      count: t.count > 999 ? (t.count/1000).toFixed(1) + 'K' : String(t.count)
+    }));
+    // If no trending, show fallback
+    if ($scope.trending.length === 0) {
+      $scope.trending = [
+        { hashtag: '#LouisvilleRealEstate', count: '0' },
+        { hashtag: '#KYRealEstate', count: '0' },
+        { hashtag: '#NuLu', count: '0' }
+      ];
+    }
+  }
 
-  // Load feed
+  // ─── Load current user ─────────────────────────────────────
+  if (token) {
+    $http.get(API_BASE + '/auth/me').then(res => {
+      $scope.currentUser = res.data;
+    }).catch(() => {
+      // Token invalid: clear it
+      localStorage.removeItem('token');
+      delete $http.defaults.headers.common['Authorization'];
+    });
+  }
+
+  // ─── Load feed ──────────────────────────────────────────────
   function loadFeed() {
     $http.get(API_BASE + '/posts').then(res => {
       $scope.feedPosts = res.data;
@@ -81,11 +108,13 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
           p.liked = p.likes.includes($scope.currentUser._id);
         });
       }
+      // Update trending hashtags
+      computeTrending($scope.feedPosts);
     });
   }
   loadFeed();
 
-  // Load communities
+  // ─── Load communities ───────────────────────────────────────
   $http.get(API_BASE + '/communities').then(res => {
     $scope.communities = res.data;
     if ($scope.currentUser) {
@@ -95,13 +124,13 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
     }
   });
 
-  // Load bot spotlight (static for now)
+  // ─── Bot spotlight ──────────────────────────────────────────
   $scope.botSpotlight = [
     { name: 'LouRealtyBot', avatar: 'https://robohash.org/lourealtybot?set=set4&size=100x100', snippet: 'Just listed 3BR in the Highlands! 🏡' },
     { name: 'KYMarketBot', avatar: 'https://robohash.org/kymarketbot?set=set4&size=100x100', snippet: 'Louisville home prices up 4.2% YoY 📈' }
   ];
 
-  // ── Auth ──
+  // ─── Auth ────────────────────────────────────────────────────
   $scope.submitSignup = function() {
     $http.post(API_BASE + '/auth/signup', $scope.signupData).then(res => {
       const data = res.data;
@@ -139,12 +168,13 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
     loadFeed();
   };
 
-  // ── Posts ──
+  // ─── Posts ───────────────────────────────────────────────────
   $scope.submitPost = function() {
     if (!$scope.newPost.content) return;
     $http.post(API_BASE + '/posts', $scope.newPost).then(res => {
       $scope.feedPosts.unshift(res.data);
       $scope.newPost = { content: '', image: '', video: '' };
+      computeTrending($scope.feedPosts);
     }).catch(err => alert('Error posting: ' + err.data.error));
   };
 
@@ -168,7 +198,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
       post.showComments = false;
     } else {
       post.showComments = true;
-      // Load comments if not loaded
       if (!post.comments || post.comments.length === 0) {
         $http.get(API_BASE + '/posts/' + post._id + '/comments').then(res => {
           post.comments = res.data;
@@ -181,15 +210,15 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
     if ($event.key === 'Enter') $scope.addComment(post);
   };
 
-  // ── Communities ──
+  // ─── Communities ─────────────────────────────────────────────
   $scope.toggleJoin = function(comm) {
     $http.post(API_BASE + '/communities/' + comm._id + '/join').then(res => {
       comm.joined = res.data.joined;
-      comm.members = res.data.memberCount; // update count if needed
+      comm.members = res.data.memberCount;
     });
   };
 
-  // ── Feed switching (dummy) ──
+  // ─── Feed switching (dummy) ──────────────────────────────────
   $scope.setFeed = function(feed) {
     document.querySelectorAll('.sc-nav-item').forEach(el => el.classList.remove('active'));
     const items = document.querySelectorAll('.sc-nav-item');
@@ -197,7 +226,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
     if (idx >= 0 && items[idx]) items[idx].classList.add('active');
   };
 
-  // ── Modals ──
+  // ─── Modals ───────────────────────────────────────────────────
   $scope.openSignup = function() { $scope.modalMode = 'signup'; $scope.modalActive = true; };
   $scope.openLogin = function() { $scope.modalMode = 'login'; $scope.modalActive = true; };
   $scope.openProfile = function() {
@@ -220,7 +249,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $timeout) {
     if (icon) icon.classList.toggle('fa-eye');
   };
 
-  // ── Periodic refresh ──
+  // ─── Periodic refresh ────────────────────────────────────────
   $interval(() => {
     loadFeed();
   }, 30000); // every 30s
