@@ -1,6 +1,5 @@
 const app = angular.module('scrollCityApp', []);
 
-// Helper filters
 app.filter('timeAgo', function() {
   return function(date) {
     if (!date) return '';
@@ -36,13 +35,14 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     ? 'http://localhost:5000/api' 
     : 'https://scroll-city.onrender.com/api';
 
-  // ─── Auth token ────────────────────────────
+  console.log('🌐 API_BASE =', API_BASE);
+
   const token = localStorage.getItem('token');
   if (token) {
     $http.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+    console.log('🔑 Token found in localStorage');
   }
 
-  // ─── State ──────────────────────────────────
   $scope.currentUser = null;
   $scope.feedPosts = [];
   $scope.communities = [];
@@ -56,7 +56,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
   $scope.loginData = { identifier: '', password: '' };
   $scope.newPost = { content: '', image: '', video: '' };
 
-  // ─── Compute trending hashtags ─────────────
   function computeTrending(posts) {
     const hashtagCount = {};
     posts.forEach(p => {
@@ -83,7 +82,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     }
   }
 
-  // ─── Compute notification count ────────────
   function computeNotifications(posts) {
     if (!$scope.currentUser) return 0;
     let count = 0;
@@ -96,17 +94,16 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     return count;
   }
 
-  // ─── Load current user ─────────────────────
   if (token) {
     $http.get(API_BASE + '/auth/me').then(res => {
       $scope.currentUser = res.data;
+      console.log('👤 User loaded:', $scope.currentUser);
     }).catch(() => {
       localStorage.removeItem('token');
       delete $http.defaults.headers.common['Authorization'];
     });
   }
 
-  // ─── Load feed ─────────────────────────────
   function loadFeed() {
     $http.get(API_BASE + '/posts').then(res => {
       $scope.feedPosts = res.data;
@@ -121,7 +118,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
   }
   loadFeed();
 
-  // ─── Load communities ──────────────────────
   $http.get(API_BASE + '/communities').then(res => {
     $scope.communities = res.data;
     if ($scope.currentUser) {
@@ -131,16 +127,17 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     }
   });
 
-  // ─── Bot spotlight ─────────────────────────
   $scope.botSpotlight = [
     { name: 'LouRealtyBot', avatar: 'https://robohash.org/lourealtybot?set=set4&size=100x100', snippet: 'Just listed 3BR in the Highlands! 🏡' },
     { name: 'KYMarketBot', avatar: 'https://robohash.org/kymarketbot?set=set4&size=100x100', snippet: 'Louisville home prices up 4.2% YoY 📈' }
   ];
 
-  // ─── AUTH ──────────────────────────────────
+  // ─── AUTH with logging ────────────────────────────
 
   $scope.submitSignup = function() {
+    console.log('🔵 Signup button clicked');
     const data = $scope.signupData;
+    console.log('📦 Signup data:', data);
     if (!data.name || !data.email || !data.username || !data.password) {
       alert('Please fill in all fields.');
       return;
@@ -149,38 +146,52 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
       alert('Password must be at least 8 characters.');
       return;
     }
-    $http.post(API_BASE + '/auth/signup', data).then(res => {
-      const result = res.data;
-      localStorage.setItem('token', result.token);
-      $http.defaults.headers.common['Authorization'] = 'Bearer ' + result.token;
-      $scope.currentUser = result.user;
-      $scope.closeModal();
-      $scope.signupData = { name: '', email: '', username: '', password: '' };
-      loadFeed();
-      alert('Welcome ' + result.user.name + '!');
-    }).catch(err => {
-      alert(err.data.error || 'Signup failed');
-    });
+    console.log('📡 Sending signup request to:', API_BASE + '/auth/signup');
+    $http.post(API_BASE + '/auth/signup', data)
+      .then(res => {
+        console.log('✅ Signup success:', res.data);
+        const result = res.data;
+        localStorage.setItem('token', result.token);
+        $http.defaults.headers.common['Authorization'] = 'Bearer ' + result.token;
+        $scope.currentUser = result.user;
+        $scope.closeModal();
+        $scope.signupData = { name: '', email: '', username: '', password: '' };
+        loadFeed();
+        alert('Welcome ' + result.user.name + '!');
+      })
+      .catch(err => {
+        console.error('❌ Signup error:', err);
+        const msg = err.data?.error || err.statusText || 'Signup failed';
+        alert(msg);
+      });
   };
 
   $scope.submitLogin = function() {
+    console.log('🔵 Login button clicked');
     const data = $scope.loginData;
+    console.log('📦 Login data:', data);
     if (!data.identifier || !data.password) {
       alert('Please enter your email/username and password.');
       return;
     }
-    $http.post(API_BASE + '/auth/login', data).then(res => {
-      const result = res.data;
-      localStorage.setItem('token', result.token);
-      $http.defaults.headers.common['Authorization'] = 'Bearer ' + result.token;
-      $scope.currentUser = result.user;
-      $scope.closeModal();
-      $scope.loginData = { identifier: '', password: '' };
-      loadFeed();
-      alert('Welcome back ' + result.user.name + '!');
-    }).catch(err => {
-      alert(err.data.error || 'Login failed');
-    });
+    console.log('📡 Sending login request to:', API_BASE + '/auth/login');
+    $http.post(API_BASE + '/auth/login', data)
+      .then(res => {
+        console.log('✅ Login success:', res.data);
+        const result = res.data;
+        localStorage.setItem('token', result.token);
+        $http.defaults.headers.common['Authorization'] = 'Bearer ' + result.token;
+        $scope.currentUser = result.user;
+        $scope.closeModal();
+        $scope.loginData = { identifier: '', password: '' };
+        loadFeed();
+        alert('Welcome back ' + result.user.name + '!');
+      })
+      .catch(err => {
+        console.error('❌ Login error:', err);
+        const msg = err.data?.error || err.statusText || 'Login failed';
+        alert(msg);
+      });
   };
 
   $scope.logout = function() {
@@ -189,9 +200,11 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     $scope.currentUser = null;
     $scope.notificationCount = 0;
     loadFeed();
+    console.log('👋 Logged out');
   };
 
-  // ─── Posts ─────────────────────────────────
+  // ─── Posts ──────────────────────────────────────
+
   $scope.submitPost = function() {
     if (!$scope.currentUser) {
       alert('Please log in first.');
@@ -252,7 +265,8 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     if ($event.key === 'Enter') $scope.addComment(post);
   };
 
-  // ─── Communities ────────────────────────────
+  // ─── Communities ──────────────────────────────
+
   $scope.toggleJoin = function(comm) {
     if (!$scope.currentUser) {
       alert('Please log in to join communities.');
@@ -264,7 +278,8 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     });
   };
 
-  // ─── Feed switching ─────────────────────────
+  // ─── UI helpers ──────────────────────────────
+
   $scope.setFeed = function(feed) {
     document.querySelectorAll('.sc-nav-item').forEach(el => el.classList.remove('active'));
     const items = document.querySelectorAll('.sc-nav-item');
@@ -272,7 +287,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     if (idx >= 0 && items[idx]) items[idx].classList.add('active');
   };
 
-  // ─── Modals ─────────────────────────────────
   $scope.openSignup = function() { $scope.modalMode = 'signup'; $scope.modalActive = true; };
   $scope.openLogin = function() { $scope.modalMode = 'login'; $scope.modalActive = true; };
   $scope.openProfile = function() {
@@ -295,7 +309,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval) {
     if (icon) icon.classList.toggle('fa-eye');
   };
 
-  // ─── Periodic refresh ──────────────────────
   $interval(() => {
     loadFeed();
   }, 30000);
