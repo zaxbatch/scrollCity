@@ -19,44 +19,37 @@ app.filter('trusted', ['$sce', function($sce) {
 
 app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
 
+  // ─── API Base ──────────────────────────────────
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
     : 'https://scroll-city.onrender.com/api';
 
-  // ─── Page state ──────────────────────────────────
-  $scope.currentPage = 'home';  // home, explore, notifications, communities, profile
+  // ─── Page state ──────────────────────────────
+  $scope.currentPage = 'home';
 
   $scope.setPage = function(page) {
     $scope.currentPage = page;
   };
 
-  // ─── Cookie consent ─────────────────────────────
+  // ─── Cookie consent ──────────────────────────
+  $scope.cookiesAccepted = localStorage.getItem('cookiesAccepted') === 'true';
+
   $scope.acceptCookies = function() {
-      localStorage.setItem('cookiesAccepted', 'true');
-      $scope.cookiesAccepted = true;
-      // Force digest if needed (though Angular should handle it)
-      if (!$scope.$$phase && !$scope.$$destroyed) {
-          $scope.$apply();
-      }
+    localStorage.setItem('cookiesAccepted', 'true');
+    $scope.cookiesAccepted = true;
+    // Force digest if needed
+    if (!$scope.$$phase && !$scope.$$destroyed) {
+      $scope.$apply();
+    }
   };
 
-    <script>
-  function acceptCookies() {
-      localStorage.setItem('cookiesAccepted', 'true');
-      document.getElementById('cookieBanner').style.display = 'none';
-  }
-  // Hide if already accepted
-  if (localStorage.getItem('cookiesAccepted') === 'true') {
-      document.getElementById('cookieBanner').style.display = 'none';
-  }
-  </script>
-
-  // ─── Auth token ──────────────────────────────────
+  // ─── Auth token ──────────────────────────────
   const token = localStorage.getItem('token');
   if (token) {
     $http.defaults.headers.common['Authorization'] = 'Bearer ' + token;
   }
 
+  // ─── State variables ─────────────────────────
   $scope.currentUser = null;
   $scope.feedPosts = [];
   $scope.communities = [];
@@ -70,7 +63,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
   $scope.loginData = { identifier: '', password: '' };
   $scope.newPost = { content: '', image: '', video: '' };
 
-  // ─── Video modal ──────────────────────────────────
+  // ─── Video modal ──────────────────────────────
   $scope.videoModalActive = false;
   $scope.videoEmbedUrl = '';
 
@@ -108,7 +101,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     $scope.videoEmbedUrl = '';
   };
 
-  // ─── Trending & notifications ──────────────────
+  // ─── Trending & notifications ─────────────────
   function computeTrending(posts) {
     const hashtagCount = {};
     posts.forEach(p => {
@@ -240,7 +233,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     $scope.currentUser = null;
     $scope.notificationCount = 0;
     loadFeed();
-    $scope.setPage('home');  // return to home on logout
+    $scope.setPage('home');
   };
 
   // ─── Posts ──────────────────────────────────────
@@ -339,6 +332,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     if (icon) icon.classList.toggle('fa-eye');
   };
 
+  // ─── Periodic refresh ──────────────────────────
   $interval(() => {
     loadFeed();
   }, 30000);
