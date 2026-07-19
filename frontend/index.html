@@ -560,6 +560,50 @@
             .sc-post-avatar { align-self: flex-start; }
             .sc-feed-sort { gap: 0.8rem; flex-wrap: wrap; }
         }
+        /* ... all previous styles (keep everything from the last version) ... */
+        /* Only change the video modal overlay background */
+        .sc-video-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10000;
+            background: rgba(0,0,0,0.7);  /* lighter than before */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.25s ease;
+        }
+        .sc-video-modal.active { visibility: visible; opacity: 1; }
+        .sc-video-modal-content {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .sc-video-modal-content iframe {
+            width: 100%;
+            aspect-ratio: 16/9;
+            border: none;
+            display: block;
+        }
+        .sc-video-modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+        .sc-video-modal-close:hover { opacity: 1; }
+        /* ... rest of styles ... */
+
     </style>
 </head>
 <body>
@@ -814,14 +858,16 @@
             </div>
         </div>
 
-        <!-- ═══ VIDEO MODAL ═══ -->
+        <!-- VIDEO MODAL – with lighter background -->
         <div class="sc-video-modal" ng-class="{'active': videoModalActive}">
             <div class="sc-video-modal-content">
                 <button class="sc-video-modal-close" ng-click="closeVideo()">&times;</button>
-                <iframe ng-src="{{videoEmbedUrl}}" frameborder="0" allowfullscreen></iframe>
+                <!-- iframe with allow attributes -->
+                <iframe ng-src="{{videoEmbedUrl}}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
             </div>
             <div class="sc-modal-overlay" ng-click="closeVideo()"></div>
         </div>
+    </div>
 
     </div> <!-- /ng-app -->
 

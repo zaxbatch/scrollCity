@@ -23,8 +23,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     ? 'http://localhost:5000/api' 
     : 'https://scroll-city.onrender.com/api';
 
-  console.log('🌐 API_BASE =', API_BASE);
-
   const token = localStorage.getItem('token');
   if (token) {
     $http.defaults.headers.common['Authorization'] = 'Bearer ' + token;
@@ -43,35 +41,35 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
   $scope.loginData = { identifier: '', password: '' };
   $scope.newPost = { content: '', image: '', video: '' };
 
-  // ─── Video modal state ────────────────────────────────
+  // ─── Video modal ──────────────────────────────
   $scope.videoModalActive = false;
   $scope.videoEmbedUrl = '';
 
-  // Convert any YouTube URL to embed URL, with Shorts support
   function getYoutubeEmbedUrl(url) {
     if (!url) return '';
     let videoId = null;
 
-    // Normal YouTube watch URL: youtube.com/watch?v=VIDEO_ID
+    // Normal watch
     let match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^#&?]*)/);
     if (match && match[1]) videoId = match[1];
 
-    // YouTube Shorts: youtube.com/shorts/VIDEO_ID
+    // Shorts
     if (!videoId) {
       match = url.match(/youtube\.com\/shorts\/([^#&?]*)/);
       if (match && match[1]) videoId = match[1];
     }
 
-    // YouTube embed URL: youtube.com/embed/VIDEO_ID
+    // Embed
     if (!videoId) {
       match = url.match(/youtube\.com\/embed\/([^#&?]*)/);
       if (match && match[1]) videoId = match[1];
     }
 
     if (videoId && videoId.length === 11) {
-      return 'https://www.youtube.com/embed/' + videoId + '?autoplay=1';
+      // Muted autoplay (browsers allow autoplay only when muted)
+      return 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&mute=1';
     }
-    return ''; // fallback – not a valid YouTube URL
+    return '';
   }
 
   $scope.openVideo = function(url) {
@@ -80,7 +78,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
       $scope.videoEmbedUrl = $sce.trustAsResourceUrl(embedUrl);
       $scope.videoModalActive = true;
     } else {
-      alert('Invalid YouTube URL. Please use a standard YouTube or Shorts link.');
+      alert('Invalid YouTube URL.');
     }
   };
 
@@ -89,7 +87,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     $scope.videoEmbedUrl = '';
   };
 
-  // ─── Compute trending ──────────────────────────────────
+  // ─── Trending & notifications ──────────────────
   function computeTrending(posts) {
     const hashtagCount = {};
     posts.forEach(p => {
@@ -128,7 +126,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     return count;
   }
 
-  // ─── Load user ──────────────────────────────────────────
+  // ─── Load data ──────────────────────────────────
   if (token) {
     $http.get(API_BASE + '/auth/me').then(res => {
       $scope.currentUser = res.data;
@@ -166,8 +164,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     { name: 'KYMarketBot', avatar: 'https://robohash.org/kymarketbot?set=set4&size=100x100', snippet: 'Louisville home prices up 4.2% YoY 📈' }
   ];
 
-  // ─── Auth ──────────────────────────────────────────────
-
+  // ─── Auth ──────────────────────────────────────
   $scope.submitSignup = function() {
     const data = $scope.signupData;
     if (!data.name || !data.email || !data.username || !data.password) {
@@ -190,8 +187,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
         alert('Welcome ' + result.user.name + '!');
       })
       .catch(err => {
-        const msg = err.data?.error || err.statusText || 'Signup failed';
-        alert(msg);
+        alert(err.data?.error || 'Signup failed');
       });
   };
 
@@ -213,8 +209,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
         alert('Welcome back ' + result.user.name + '!');
       })
       .catch(err => {
-        const msg = err.data?.error || err.statusText || 'Login failed';
-        alert(msg);
+        alert(err.data?.error || 'Login failed');
       });
   };
 
@@ -226,8 +221,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     loadFeed();
   };
 
-  // ─── Posts ──────────────────────────────────────────────
-
+  // ─── Posts ──────────────────────────────────────
   $scope.submitPost = function() {
     if (!$scope.currentUser) {
       alert('Please log in first.');
@@ -288,8 +282,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     if ($event.key === 'Enter') $scope.addComment(post);
   };
 
-  // ─── Communities ─────────────────────────────────────────
-
+  // ─── Communities ──────────────────────────────
   $scope.toggleJoin = function(comm) {
     if (!$scope.currentUser) {
       alert('Please log in to join communities.');
@@ -301,8 +294,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
     });
   };
 
-  // ─── UI helpers ──────────────────────────────────────────
-
+  // ─── UI helpers ──────────────────────────────
   $scope.setFeed = function(feed) {
     document.querySelectorAll('.sc-nav-item').forEach(el => el.classList.remove('active'));
     const items = document.querySelectorAll('.sc-nav-item');
