@@ -1,7 +1,5 @@
 const app = angular.module('scrollCityApp', []);
 
-// ─── Filters ──────────────────────────────────────────────
-
 app.filter('timeAgo', function() {
   return function(date) {
     if (!date) return '';
@@ -25,40 +23,53 @@ app.filter('trusted', ['$sce', function($sce) {
   };
 }]);
 
-// ─── Controller ────────────────────────────────────────────
-
 app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $document) {
 
-  // ─── API Base ──────────────────────────────────────────
   const API_BASE = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api' 
     : 'https://scroll-city.onrender.com/api';
 
   // ─── Page state ──────────────────────────────────────
   $scope.currentPage = 'home';
+  $scope.setPage = function(page) { $scope.currentPage = page; };
 
-  $scope.setPage = function(page) {
-    $scope.currentPage = page;
+  // ─── Sort state ──────────────────────────────────────
+  $scope.sortMode = 'latest';
+  $scope.sortField = 'createdAt';
+  $scope.sortReverse = true;
+
+  $scope.setSort = function(mode) {
+    if (mode === 'trending') {
+      $scope.sortField = 'likes.length';
+      $scope.sortReverse = true;
+      $scope.sortMode = 'trending';
+    } else {
+      $scope.sortField = 'createdAt';
+      $scope.sortReverse = true;
+      $scope.sortMode = 'latest';
+    }
+  };
+
+  // ─── Sidebar toggle ──────────────────────────────────
+  $scope.sidebarOpen = false;
+  $scope.toggleSidebar = function() {
+    $scope.sidebarOpen = !$scope.sidebarOpen;
+    document.body.classList.toggle('no-scroll', $scope.sidebarOpen);
   };
 
   // ─── Cookie consent ──────────────────────────────────
   $scope.cookiesAccepted = localStorage.getItem('cookiesAccepted') === 'true';
-
   $scope.acceptCookies = function() {
     localStorage.setItem('cookiesAccepted', 'true');
     $scope.cookiesAccepted = true;
-    if (!$scope.$$phase && !$scope.$$destroyed) {
-      $scope.$apply();
-    }
+    if (!$scope.$$phase && !$scope.$$destroyed) $scope.$apply();
   };
 
   // ─── Auth token ──────────────────────────────────────
   const token = localStorage.getItem('token');
-  if (token) {
-    $http.defaults.headers.common['Authorization'] = 'Bearer ' + token;
-  }
+  if (token) $http.defaults.headers.common['Authorization'] = 'Bearer ' + token;
 
-  // ─── State variables ────────────────────────────────
+  // ─── State ────────────────────────────────────────────
   $scope.currentUser = null;
   $scope.feedPosts = [];
   $scope.communities = [];
@@ -104,7 +115,6 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
       alert('Invalid YouTube URL.');
     }
   };
-
   $scope.closeVideo = function() {
     $scope.videoModalActive = false;
     $scope.videoEmbedUrl = '';
@@ -113,14 +123,12 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
   // ─── Link modal ──────────────────────────────────────
   $scope.linkModalActive = false;
   $scope.linkUrl = '';
-
   $scope.openLinkModal = function(url) {
     if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
       $scope.linkUrl = $sce.trustAsResourceUrl(url);
       $scope.linkModalActive = true;
     }
   };
-
   $scope.closeLinkModal = function() {
     $scope.linkModalActive = false;
     $scope.linkUrl = '';
@@ -225,9 +233,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
         loadFeed();
         alert('Welcome ' + result.user.name + '!');
       })
-      .catch(err => {
-        alert(err.data?.error || 'Signup failed');
-      });
+      .catch(err => alert(err.data?.error || 'Signup failed'));
   };
 
   $scope.submitLogin = function() {
@@ -247,9 +253,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
         loadFeed();
         alert('Welcome back ' + result.user.name + '!');
       })
-      .catch(err => {
-        alert(err.data?.error || 'Login failed');
-      });
+      .catch(err => alert(err.data?.error || 'Login failed'));
   };
 
   $scope.logout = function() {
@@ -358,9 +362,7 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
   };
 
   // ─── Periodic refresh ──────────────────────────
-  $interval(() => {
-    loadFeed();
-  }, 30000);
+  $interval(() => { loadFeed(); }, 30000);
 
   // ─── Intercept external links ────────────────────
   function handleLinkClick(e) {
@@ -371,57 +373,39 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $docum
       if (target.closest('.sc-posts') || target.closest('.sc-post-content')) {
         e.preventDefault();
         $scope.openLinkModal(href);
-        if (!$scope.$$phase && !$scope.$$destroyed) {
-          $scope.$apply();
-        }
+        if (!$scope.$$phase && !$scope.$$destroyed) $scope.$apply();
       }
     }
   }
 
   $document.on('click', handleLinkClick);
-
-  $scope.$on('$destroy', function() {
-    $document.off('click', handleLinkClick);
-  });
+  $scope.$on('$destroy', function() { $document.off('click', handleLinkClick); });
 
 });
 
-// ─── Footer toggle logic (outside Angular) ────────────────
-
+// ─── Footer toggle ──────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   const footer = document.querySelector('footer');
   if (!footer) return;
-
   let lastScrollY = window.scrollY;
   let scrollTimeout;
-
   function handleScroll() {
     const currentScrollY = window.scrollY;
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
-
     if (currentScrollY > lastScrollY && currentScrollY > 100) {
       footer.classList.add('visible');
     } else if (currentScrollY < lastScrollY) {
-      if (!footer.matches(':hover')) {
-        footer.classList.remove('visible');
-      }
+      if (!footer.matches(':hover')) footer.classList.remove('visible');
     }
-
     if (currentScrollY + windowHeight >= documentHeight - 100) {
       footer.classList.add('visible');
     }
-
     lastScrollY = currentScrollY;
   }
-
   window.addEventListener('scroll', function() {
     if (scrollTimeout) return;
-    scrollTimeout = setTimeout(() => {
-      handleScroll();
-      scrollTimeout = null;
-    }, 100);
+    scrollTimeout = setTimeout(() => { handleScroll(); scrollTimeout = null; }, 100);
   });
-
   footer.classList.remove('visible');
 });
