@@ -316,6 +316,16 @@
             </div>
         </div>
 
+        <!-- ═══ EXTERNAL LINK MODAL ═══ -->
+        <div class="sc-link-modal" ng-class="{'active': linkModalActive}">
+            <div class="sc-modal-overlay" ng-click="closeLinkModal()"></div>
+            <div class="sc-link-modal-content" ng-click="$event.stopPropagation()">
+                <button class="sc-link-modal-close" ng-click="closeLinkModal()">&times;</button>
+                <iframe ng-src="{{linkUrl}}" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
+
+
     </div> <!-- /ng-app -->
 
     <!-- FOOTER -->

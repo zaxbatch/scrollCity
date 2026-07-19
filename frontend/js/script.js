@@ -21,7 +21,7 @@ app.filter('trusted', ['$sce', function($sce) {
 
 // ─── Controller ────────────────────────────────────────────
 
-app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
+app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce, $document) {
 
   // ─── API Base ──────────────────────────────────────────
   const API_BASE = window.location.hostname === 'localhost' 
@@ -102,6 +102,22 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
   $scope.closeVideo = function() {
     $scope.videoModalActive = false;
     $scope.videoEmbedUrl = '';
+  };
+
+  // ─── Link modal ──────────────────────────────────────
+  $scope.linkModalActive = false;
+  $scope.linkUrl = '';
+
+  $scope.openLinkModal = function(url) {
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      $scope.linkUrl = $sce.trustAsResourceUrl(url);
+      $scope.linkModalActive = true;
+    }
+  };
+
+  $scope.closeLinkModal = function() {
+    $scope.linkModalActive = false;
+    $scope.linkUrl = '';
   };
 
   // ─── Trending & notifications ──────────────────────
@@ -339,11 +355,39 @@ app.controller('ScrollCityCtrl', function($scope, $http, $interval, $sce) {
   $interval(() => {
     loadFeed();
   }, 30000);
+
+  // ─── Intercept external links ────────────────────
+  // Use event delegation to catch clicks on external links
+  function handleLinkClick(e) {
+    const target = e.target.closest('a');
+    if (!target) return;
+    const href = target.getAttribute('href');
+    // Only intercept external links (http/https) and not if it's a javascript: or mailto: etc.
+    if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+      // Check if the link is inside a post (restrict to .sc-posts or .sc-post-content)
+      if (target.closest('.sc-posts') || target.closest('.sc-post-content')) {
+        e.preventDefault();
+        $scope.openLinkModal(href);
+        // Trigger digest if needed
+        if (!$scope.$$phase && !$scope.$$destroyed) {
+          $scope.$apply();
+        }
+      }
+    }
+  }
+
+  // Attach the click listener using $document (Angular's wrapper)
+  $document.on('click', handleLinkClick);
+
+  // Clean up the listener when the scope is destroyed
+  $scope.$on('$destroy', function() {
+    $document.off('click', handleLinkClick);
+  });
+
 });
 
 // ─── Footer toggle logic (outside Angular) ────────────────
 
-// Wait for DOM to be ready
 document.addEventListener('DOMContentLoaded', function() {
   const footer = document.querySelector('footer');
   if (!footer) return;
@@ -356,18 +400,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
 
-    // Show footer when user scrolls down and is near the bottom of the page
-    // or if they scroll down at all (more intuitive)
     if (currentScrollY > lastScrollY && currentScrollY > 100) {
       footer.classList.add('visible');
     } else if (currentScrollY < lastScrollY) {
-      // if scrolled up, hide footer (but only if not hovering)
       if (!footer.matches(':hover')) {
         footer.classList.remove('visible');
       }
     }
 
-    // Also show if user is near the bottom of the page
     if (currentScrollY + windowHeight >= documentHeight - 100) {
       footer.classList.add('visible');
     }
@@ -375,7 +415,6 @@ document.addEventListener('DOMContentLoaded', function() {
     lastScrollY = currentScrollY;
   }
 
-  // Debounce scroll events for performance
   window.addEventListener('scroll', function() {
     if (scrollTimeout) return;
     scrollTimeout = setTimeout(() => {
@@ -384,7 +423,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 100);
   });
 
-  // Show footer on hover (already handled by CSS)
-  // Ensure footer is hidden initially
   footer.classList.remove('visible');
 });
