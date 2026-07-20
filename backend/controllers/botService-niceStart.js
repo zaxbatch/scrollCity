@@ -280,48 +280,27 @@ const listingTemplates = [
   }
 ];
 
-// ─── CONCISE Stat Templates (short & sweet) ─────────────────────
+// ─── Enhanced Stat Templates ────────────────────────────────────
 const statTemplates = [
   (stat) => {
-    // Truncate value to 80 characters max
-    let shortValue = stat.value;
-    if (shortValue.length > 80) {
-      shortValue = shortValue.slice(0, 80) + '...';
-    }
-    const intros = [`📊 Key stat:`, `📈 Market data:`, `💡 Did you know?`, `🔍 Quick stat:`, `📉 Here's a number:`];
-    return `${random(intros)} ${stat.metric} in ${stat.region} is ${shortValue}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
+    const intros = [`📊 Here's what the numbers say:`, `📈 Let's look at the data:`, `💡 Key market indicator:`, `🔍 Important stat to know:`, `📉 Market analysis:`];
+    return `${random(intros)} ${stat.metric} in ${stat.region} is ${stat.value}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (stat) => {
-    let shortValue = stat.value;
-    if (shortValue.length > 80) {
-      shortValue = shortValue.slice(0, 80) + '...';
-    }
-    const insights = [`I'm watching this closely:`, `This caught my eye:`, `Here's a snapshot:`, `Take note:`, `This is worth knowing:`];
-    return `${random(insights)} ${stat.metric} now stands at ${shortValue} in ${stat.region}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
+    const insights = [`As someone who watches the market daily:`, `From my experience in Louisville:`, `I've been tracking this trend:`, `Here's what this means for buyers/sellers:`, `This is significant for our market:`];
+    return `${random(insights)} ${stat.metric} is now ${stat.value} in ${stat.region}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (stat) => {
-    let shortValue = stat.value;
-    if (shortValue.length > 80) {
-      shortValue = shortValue.slice(0, 80) + '...';
-    }
-    const questions = [`What does this tell you?`, `Is this surprising?`, `How does this affect you?`, `Is that good or bad?`, `Would you have guessed?`];
-    return `${random(questions)} ${stat.metric} in ${stat.region} is ${shortValue}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
+    const questions = [`What does this mean for you?`, `Is this good news?`, `How does this affect your buying power?`, `Thinking about selling? Consider:`, `Wondering about market timing? Check:`];
+    return `${random(questions)} ${stat.metric}: ${stat.value} in ${stat.region}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (stat) => {
-    let shortValue = stat.value;
-    if (shortValue.length > 80) {
-      shortValue = shortValue.slice(0, 80) + '...';
-    }
-    const actions = [`Smart buyers check this:`, `Investors watch this number:`, `This data matters:`, `Keep an eye on this:`, `Here's why this is important:`];
-    return `${random(actions)} ${stat.metric} = ${shortValue} in ${stat.region}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
+    const actions = [`Smart buyers are paying attention to:`, `Here's why you should care:`, `This data is crucial for your decision:`, `Want to make informed decisions? Consider:`, `Here's what successful investors watch:`];
+    return `${random(actions)} ${stat.metric} in ${stat.region} is ${stat.value}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (stat) => {
-    let shortValue = stat.value;
-    if (shortValue.length > 80) {
-      shortValue = shortValue.slice(0, 80) + '...';
-    }
-    const trends = [`The trend says:`, `We're seeing:`, `The market shows:`, `Numbers don't lie:`, `This is consistent:`];
-    return `${random(trends)} ${stat.metric} in ${stat.region} is ${shortValue}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
+    const trends = [`The trend is clear:`, `We're seeing a pattern:`, `The market is showing:`, `Consistent data shows:`, `The numbers tell us:`];
+    return `${random(trends)} ${stat.metric} sits at ${stat.value} in ${stat.region}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   }
 ];
 
@@ -576,7 +555,7 @@ async function postFromBot(botUsername) {
     }
     case 'general':
     default: {
-      // Generic posts with personality – including coffee mentions
+      // Generic posts with personality – now including coffee mentions
       const genericTemplates = [
         `👋 ${botUser.name} here! I'm passionate about helping you find your dream home in Louisville. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`,
         `🏡 Louisville real estate is my specialty – let me help you navigate the market. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`,
@@ -613,6 +592,7 @@ async function postFromBot(botUsername) {
 
   // ─── Ensure a CTA is included if missing ────────────────────
   // Check if postContent already has a CTA (contains a URL or a common CTA starter)
+  // We'll just append a random CTA if it doesn't have one of our CTAs.
   const hasCTA = ALL_CTAS.some(cta => postContent.includes(cta));
   if (!hasCTA) {
     // Add a smooth transition and a CTA
