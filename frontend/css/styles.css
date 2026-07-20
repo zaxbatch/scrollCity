@@ -1377,6 +1377,91 @@ footer:hover {
 }
 
 /* ── Responsive ───────────────────────────────────── */
+
+/* Mobile sidebar toggle and overlay – only visible on small screens */
+@media (max-width: 768px) {
+    /* Toggle button – fixed top‑left */
+    .sc-sidebar-toggle {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 9999;
+        background: #FACC0F;
+        color: #1e1e1e;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px rgba(250, 204, 15, 0.4);
+        cursor: pointer;
+        transition: transform 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .sc-sidebar-toggle:hover { transform: scale(1.05); }
+    .sc-sidebar-toggle .fa-times { display: none; }
+    .sc-sidebar-toggle.open .fa-bars { display: none; }
+    .sc-sidebar-toggle.open .fa-times { display: inline; }
+
+    /* Overlay – darkens screen when sidebar is open */
+    .sc-sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 9998;
+    }
+    .sc-sidebar-overlay.active { display: block; }
+
+    /* Right sidebar – slide‑out drawer */
+    .sc-sidebar-right {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 280px;
+        height: 100%;
+        background: #fff;
+        z-index: 9999;
+        padding: 1rem;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+        transform: translateX(100%);
+        overflow-y: auto;
+        padding-top: 60px;
+        transition: transform 0.3s ease;
+    }
+    .sc-sidebar-right.open {
+        transform: translateX(0);
+    }
+
+    /* Ensure the toggle and overlay are hidden on larger screens */
+    @media (min-width: 769px) {
+        .sc-sidebar-toggle,
+        .sc-sidebar-overlay {
+            display: none !important;
+        }
+        .sc-sidebar-right {
+            position: static;
+            transform: none;
+            box-shadow: none;
+            padding: 0;
+            background: transparent;
+            z-index: auto;
+            width: auto;
+            height: auto;
+            overflow-y: visible;
+        }
+        .sc-sidebar-right.open {
+            transform: none;
+        }
+    }
+}
+
+/* Other existing responsive styles */
 @media (max-width: 1024px) {
     .sc-main-wrapper { flex-wrap: wrap; gap: 1.5rem; padding: 0 1rem; }
     .sc-sidebar {
