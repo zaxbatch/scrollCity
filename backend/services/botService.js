@@ -9,11 +9,12 @@ const Event = require('../models/Event');
 // ─── Helper: random item from array ──────────────────────────
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// ─── Website Plug ──────────────────────────────────────────────
-const WEBSITE = 'zerric.com';
+// ─── Website link ─────────────────────────────────────────────
+const WEBSITE_URL = 'https://zerric.com';
+const WEBSITE_LINK = `<a href="${WEBSITE_URL}" target="_blank" rel="noopener noreferrer">zerric.com</a>`;
 const AGENT_NAME = 'Zerric';
 
-// ─── Trending Topics (curated from real Louisville market data) ──
+// ─── Trending Topics ──────────────────────────────────────────
 const TRENDING_TOPICS = [
   {
     headline: 'Louisville inventory up 39% year-over-year',
@@ -67,18 +68,18 @@ const TRENDING_TOPICS = [
   }
 ];
 
-// ─── Call‑to‑action pool (all point to Zerric) ──────────────
+// ─── Call‑to‑action pool (all point to Zerric with clickable link) ──
 const CTAS = [
-  `🏠 Have questions about the Louisville market? Contact Zerric at ${WEBSITE} – he's the local expert!`,
-  `📞 Thinking of buying or selling? Zerric can help – visit ${WEBSITE} to get started.`,
-  `📧 Want to know what your home is worth? Zerric offers free valuations – check out ${WEBSITE}.`,
-  `🔍 Seeing a home you like? Reach out to Zerric at ${WEBSITE} for a private showing.`,
-  `📈 Not sure if now is the right time? Zerric can walk you through it – ${WEBSITE}.`,
-  `🏡 Ready to make a move? Zerric is just a click away at ${WEBSITE}.`,
-  `💬 Have questions about today's market? Zerric has the answers – visit ${WEBSITE}.`,
-  `📱 Thinking of selling? Zerric can help you get top dollar – ${WEBSITE}.`,
-  `🤔 Wondering what this means for you? Zerric can explain – reach out at ${WEBSITE}.`,
-  `🏘️ Looking for the perfect neighborhood? Zerric knows Louisville inside out – ${WEBSITE}.`
+  `🏠 Have questions about the Louisville market? Contact Zerric at ${WEBSITE_LINK} – he's the local expert!`,
+  `📞 Thinking of buying or selling? Zerric can help – visit ${WEBSITE_LINK} to get started.`,
+  `📧 Want to know what your home is worth? Zerric offers free valuations – check out ${WEBSITE_LINK}.`,
+  `🔍 Seeing a home you like? Reach out to Zerric at ${WEBSITE_LINK} for a private showing.`,
+  `📈 Not sure if now is the right time? Zerric can walk you through it – ${WEBSITE_LINK}.`,
+  `🏡 Ready to make a move? Zerric is just a click away at ${WEBSITE_LINK}.`,
+  `💬 Have questions about today's market? Zerric has the answers – visit ${WEBSITE_LINK}.`,
+  `📱 Thinking of selling? Zerric can help you get top dollar – ${WEBSITE_LINK}.`,
+  `🤔 Wondering what this means for you? Zerric can explain – reach out at ${WEBSITE_LINK}.`,
+  `🏘️ Looking for the perfect neighborhood? Zerric knows Louisville inside out – ${WEBSITE_LINK}.`
 ];
 
 // ─── Trending Topic Templates ──────────────────────────────────
@@ -90,7 +91,7 @@ const trendingTemplates = [
   (topic) => `💡 ${topic.headline}. ${topic.detail} ${random(CTAS)} #Louisville`
 ];
 
-// ─── Listing Templates (with Zerric plug) ────────────────────
+// ─── Listing Templates ────────────────────────────────────────
 const listingTemplates = [
   (listing) => `🏡 New listing alert! ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA at ${listing.address} for $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 80)}... ${random(CTAS)} #LouisvilleRealEstate`,
   (listing) => `Just hit the market: ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA in ${listing.city || 'Louisville'} for $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 60)}... ${random(CTAS)} #KYHomes`,
@@ -99,7 +100,7 @@ const listingTemplates = [
   (listing) => `✨ Just listed: ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA with ${listing.sqft || '?'} sqft. $${listing.price.toLocaleString()} – ${random(CTAS)}`
 ];
 
-// ─── Stat Templates (with Zerric plug) ──────────────────────
+// ─── Stat Templates ───────────────────────────────────────────
 const statTemplates = [
   (stat) => `📊 ${stat.metric} in ${stat.region}: ${stat.value}. ${stat.source || 'MLS Data'}. ${random(CTAS)} #KYMarket`,
   (stat) => `💰 Market update: ${stat.metric} is now ${stat.value} in ${stat.region}. ${random(CTAS)}`,
@@ -108,7 +109,7 @@ const statTemplates = [
   (stat) => `🏦 ${stat.metric}: ${stat.value}. ${random(CTAS)}`
 ];
 
-// ─── News Templates (with Zerric plug) ──────────────────────
+// ─── News Templates ───────────────────────────────────────────
 const newsTemplates = [
   (news) => `📰 ${news.headline}: ${news.summary.slice(0, 100)}... ${random(CTAS)} #KYNews`,
   (news) => `🔔 Big news: ${news.headline}. ${news.summary.slice(0, 80)}... ${random(CTAS)}`,
@@ -117,7 +118,7 @@ const newsTemplates = [
   (news) => `💥 ${news.headline}: ${news.summary.slice(0, 80)}... ${random(CTAS)}`
 ];
 
-// ─── Event Templates (with Zerric plug) ──────────────────────
+// ─── Event Templates ──────────────────────────────────────────
 const eventTemplates = [
   (event) => `📅 ${event.title} – ${event.description?.slice(0, 60)}... ${event.location || ''} ${random(CTAS)} #Event`,
   (event) => `🗓️ Mark your calendar: ${event.title}. ${event.description?.slice(0, 70)}... ${random(CTAS)}`,
@@ -189,7 +190,7 @@ async function postFromBot(botUsername) {
   let video = '';
   let dataType = '';
 
-  // 25% chance to post a trending topic (instead of always using data)
+  // 25% chance to post a trending topic
   if (Math.random() < 0.25) {
     const topic = random(TRENDING_TOPICS);
     const template = random(trendingTemplates);
@@ -242,7 +243,6 @@ async function postFromBot(botUsername) {
       postContent = template(dataItem);
       dataType = type;
       
-      // If it's a listing, use its first image if available
       if (dataItem.images && dataItem.images.length > 0) {
         image = dataItem.images[0];
       }
@@ -257,7 +257,7 @@ async function postFromBot(botUsername) {
     dataType = 'trending-fallback';
   }
 
-  // ─── Fetch a Pexels image (35% chance, only if no image already) ──
+  // ─── Fetch a Pexels image (35% chance) ──
   if (!image && Math.random() < 0.35) {
     let query = 'louisville';
     if (dataType === 'listing') query = 'house';

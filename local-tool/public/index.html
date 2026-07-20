@@ -166,7 +166,6 @@
         <h3>Manage Trending Topics</h3>
         <p>Add, edit, or deactivate topics that bots will post about.</p>
 
-        <!-- Form to add new topic -->
         <div class="topic-form">
             <h4>Add New Topic</h4>
             <div class="form-row">
@@ -230,8 +229,9 @@
             });
         });
 
-        // ─── PDF tool (existing) ──────────────────────────────
-        pdfjsLib.GlobalWorkerSettings.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        // ─── PDF tool ────────────────────────────────────────────
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
         const fileInput = document.getElementById('fileInput');
         const dropZone = document.getElementById('dropZone');
         const statusDiv = document.getElementById('status');
@@ -243,8 +243,14 @@
 
         let parsedData = null;
 
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = '#fdf8ee'; });
-        dropZone.addEventListener('dragleave', () => { dropZone.style.background = '#fff'; });
+        // ─── Drag & drop events ──────────────────────────────────
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.background = '#fdf8ee';
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.background = '#fff';
+        });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.style.background = '#fff';
@@ -255,6 +261,7 @@
             if (e.target.files.length) handleFile(e.target.files[0]);
         });
 
+        // ─── File handler ────────────────────────────────────────
         function handleFile(file) {
             if (file.type !== 'application/pdf') {
                 setStatus('❌ Please upload a PDF file.', 'error');
@@ -276,12 +283,19 @@
                         seedSummary.style.display = 'none';
                         const total = parsed.listings.length + parsed.stats.length + parsed.news.length + parsed.events.length;
                         setStatus(`✅ Extracted: ${parsed.listings.length} listings, ${parsed.stats.length} stats, ${parsed.news.length} news, ${parsed.events.length} events (${total} total items)`, 'success');
-                    }).catch(err => setStatus('❌ Error extracting text: ' + err.message, 'error'));
-                }).catch(err => setStatus('❌ Error reading PDF: ' + err.message, 'error'));
+                    }).catch(err => {
+                        console.error(err);
+                        setStatus('❌ Error extracting text: ' + err.message, 'error');
+                    });
+                }).catch(err => {
+                    console.error(err);
+                    setStatus('❌ Error reading PDF: ' + err.message, 'error');
+                });
             };
             reader.readAsArrayBuffer(file);
         }
 
+        // ─── Extract text from PDF ──────────────────────────────
         function extractText(pdf) {
             let fullText = '';
             const pagePromises = [];
@@ -297,14 +311,131 @@
             });
         }
 
+        // ─── Parser (fully functional) ──────────────────────────
         function parseText(text) {
-            // ... (same parsing logic as before) ...
-            // For brevity, I'll keep the same parser – you can reuse the one from the previous version.
-            // If you need the full parser, let me know and I'll paste it again.
-            // (I'll assume it's unchanged)
-            return { listings: [], stats: [], news: [], events: [] };
+            const listings = [];
+            const stats = [];
+            const news = [];
+            const events = [];
+
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+            // ─── Listings ────────────────────────────────────────
+            const addressRegex = /\d{1,5}\s+[A-Za-z0-9\s.,]+(?:St|Ave|Rd|Blvd|Dr|Ln|Ct|Way|Pkwy|Parkway|Boulevard|Street|Avenue|Road|Lane|Court|Drive|Pl|Place|Cir|Circle|Terrace|Ter|Trl|Trail|Hwy|Highway)/i;
+            const priceRegex = /\$\s*([\d,]+)/;
+            const bedsRegex = /(\d+)\s*(?:bed|br|bedroom)/i;
+            const bathsRegex = /(\d+\.?\d*)\s*(?:bath|ba|bathroom)/i;
+            const sqftRegex = /(\d+[,.\d]*)\s*(?:sq\s*ft|sqft|square\s*feet?)/i;
+            const mlsRegex = /MLS\s*ID:\s*([A-Z0-9]+)/i;
+
+            let i = 0;
+            while (i < lines.length) {
+                const line = lines[i];
+                if (addressRegex.test(line) || line.includes('MLS ID')) {
+                    let address = line.match(addressRegex)?.[0] || '';
+                    let priceMatch = line.match(priceRegex) || lines[i+1]?.match(priceRegex);
+                    let price = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : null;
+                    let beds = line.match(bedsRegex)?.[1] || lines[i+1]?.match(bedsRegex)?.[1] || null;
+                    let baths = line.match(bathsRegex)?.[1] || lines[i+1]?.match(bathsRegex)?.[1] || null;
+                    let sqft = line.match(sqftRegex)?.[1] || lines[i+1]?.match(sqftRegex)?.[1] || null;
+                    let mls = line.match(mlsRegex)?.[1] || lines[i+1]?.match(mlsRegex)?.[1] || null;
+                    let status = 'Active';
+                    if (line.includes('Pending') || (lines[i+1] && lines[i+1].includes('Pending'))) status = 'Pending';
+                    if (line.includes('Closed') || (lines[i+1] && lines[i+1].includes('Closed'))) status = 'Closed';
+
+                    if (address && price) {
+                        listings.push({
+                            address,
+                            city: 'Louisville',
+                            state: 'KY',
+                            zip: address.match(/\d{5}/)?.[0] || '',
+                            price,
+                            bedrooms: beds ? parseInt(beds) : null,
+                            bathrooms: baths ? parseFloat(baths) : null,
+                            sqft: sqft ? parseInt(sqft.replace(/,/g, '')) : null,
+                            propertyType: 'Single Family',
+                            status,
+                            description: `MLS ID: ${mls || 'N/A'}`,
+                            images: [],
+                            source: 'PDF Import'
+                        });
+                    }
+                }
+                i++;
+            }
+
+            // ─── Stats ──────────────────────────────────────────
+            const statRegex = /(Median|Average|Total|New|Pending|Closed|Days on Market|Months of Inventory|Active Listings|List Price|Sold Price)\s*:?\s*(.*?)(?:\n|$)/i;
+            for (const line of lines) {
+                const match = line.match(statRegex);
+                if (match) {
+                    const metric = match[1].trim();
+                    const value = match[2].trim().replace(/,$/, '');
+                    if (/\d/.test(value)) {
+                        stats.push({
+                            metric,
+                            value,
+                            region: 'Louisville, KY',
+                            category: 'Price',
+                            source: 'PDF Report',
+                            date: new Date()
+                        });
+                    }
+                }
+            }
+
+            // ─── News ────────────────────────────────────────────
+            const newsKeywords = ['approves', 'announced', 'new', 'breaks ground', 'development', 'market', 'prices', 'construction', 'grant'];
+            for (const line of lines) {
+                if (newsKeywords.some(kw => line.toLowerCase().includes(kw)) && line.length > 30 && line.length < 200) {
+                    let headline = line;
+                    let summary = '';
+                    if (line.includes('.')) {
+                        const parts = line.split('.');
+                        headline = parts[0] + '.';
+                        summary = parts.slice(1).join('. ').trim();
+                    }
+                    news.push({
+                        headline: headline.slice(0, 100),
+                        summary: summary || line.slice(0, 150),
+                        category: 'Market',
+                        source: 'PDF Report'
+                    });
+                }
+            }
+
+            // ─── Events ──────────────────────────────────────────
+            const eventKeywords = ['meeting', 'tour', 'webinar', 'open house', 'community', 'fair'];
+            for (const line of lines) {
+                if (eventKeywords.some(kw => line.toLowerCase().includes(kw)) && /\d{1,2}\/\d{1,2}/.test(line)) {
+                    events.push({
+                        title: line.slice(0, 80),
+                        description: line.slice(0, 120),
+                        location: 'Louisville, KY',
+                        startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                        type: 'Other'
+                    });
+                }
+            }
+
+            // Deduplicate listings by address
+            const seen = new Set();
+            const uniqueListings = listings.filter(l => {
+                const key = l.address + l.price;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+
+            return {
+                listings: uniqueListings,
+                stats: stats.slice(0, 20),
+                news: news.slice(0, 10),
+                events: events.slice(0, 5)
+            };
         }
 
+        // ─── UI helpers ──────────────────────────────────────────
         function setStatus(msg, type) {
             statusDiv.textContent = msg;
             statusDiv.className = 'status';
@@ -332,11 +463,21 @@
             URL.revokeObjectURL(url);
         }
 
+        // ─── Seed to API ─────────────────────────────────────────
         async function seedToAPI() {
-            if (!parsedData) { alert('No data to seed.'); return; }
+            if (!parsedData) {
+                alert('No data to seed. Please upload a PDF first.');
+                return;
+            }
+            if (!parsedData.listings.length && !parsedData.stats.length && !parsedData.news.length && !parsedData.events.length) {
+                alert('No data found to seed. Please check your PDF.');
+                return;
+            }
+
             seedBtn.disabled = true;
             seedStatus.textContent = '⏳ Seeding...';
             seedSummary.style.display = 'none';
+
             try {
                 const response = await fetch('/seed', {
                     method: 'POST',
@@ -452,17 +593,8 @@
         // ─── Bots ──────────────────────────────────────────────
         async function loadBots() {
             const select = document.getElementById('botSelect');
-            try {
-                const res = await fetch('/admin/status');
-                if (!res.ok) throw new Error('Failed to fetch bots');
-                const data = await res.json();
-                // We don't have bot list API, so we'll use a static list or we can add one.
-                // For now, we'll assume the bot usernames are known.
-                const botNames = ['lourealtybot', 'kymarketbot', 'nuludevbot', 'highlandsagent', 'kyinvestorbot', 'louclosingbot', 'kynewsbot', 'stmatthewsre', 'lourentalbot', 'kyhistoricbot'];
-                select.innerHTML = '<option value="">Select a bot...</option>' + botNames.map(b => `<option value="${b}">${b}</option>`).join('');
-            } catch (err) {
-                select.innerHTML = '<option value="">Error loading bots</option>';
-            }
+            const botNames = ['lourealtybot', 'kymarketbot', 'nuludevbot', 'highlandsagent', 'kyinvestorbot', 'louclosingbot', 'kynewsbot', 'stmatthewsre', 'lourentalbot', 'kyhistoricbot'];
+            select.innerHTML = '<option value="">Select a bot...</option>' + botNames.map(b => `<option value="${b}">${b}</option>`).join('');
         }
 
         async function triggerBot() {
@@ -520,10 +652,8 @@
         }
 
         // ─── Load initial data for active tab ──────────────────
-        // The tab click handlers will load data, but we also load the first tab's content if needed.
-        // For seed tab, nothing to load initially.
-        // For others, they'll load when clicked.
-        // Also load dashboard on page load if it's the active tab (it's not, so we can load it on first click).
+        // The tabs are handled by click, but we can load dashboard when clicked.
+        // For now, we let the tab click load them.
     </script>
 </body>
 </html>
