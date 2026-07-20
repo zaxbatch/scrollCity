@@ -4,44 +4,29 @@ const adminController = require('../controllers/adminController');
 const router = express.Router();
 
 // ─── Data upload endpoints ──────────────────────────────────
-
-// Upload listings
 router.post('/data/listings', adminAuth, adminController.uploadListings);
-
-// Upload market stats
 router.post('/data/stats', adminAuth, adminController.uploadStats);
-
-// Upload news items
 router.post('/data/news', adminAuth, adminController.uploadNews);
-
-// Upload events
 router.post('/data/events', adminAuth, adminController.uploadEvents);
 
 // ─── Bot trigger ────────────────────────────────────────────
-
-// Force a bot to post immediately
 router.post('/bots/trigger', adminAuth, adminController.triggerBotPost);
 
 // ─── Data status ────────────────────────────────────────────
-
-// Get counts of all data types
 router.get('/data/status', adminAuth, adminController.getDataStatus);
 
 // ─── Trending Topics CRUD ──────────────────────────────────
-
-// Get all trending topics (active by default; ?all=true for all)
 router.get('/trending', adminAuth, adminController.getTrendingTopics);
-
-// Get a single trending topic
 router.get('/trending/:id', adminAuth, adminController.getTrendingTopic);
-
-// Create a new trending topic
 router.post('/trending', adminAuth, adminController.createTrendingTopic);
-
-// Update a trending topic
 router.put('/trending/:id', adminAuth, adminController.updateTrendingTopic);
-
-// Delete a trending topic
 router.delete('/trending/:id', adminAuth, adminController.deleteTrendingTopic);
+
+// ─── Generic CRUD for listings, stats, news, events ────────
+router.get('/data/:type', adminAuth, adminController.getItems);
+router.get('/data/:type/:id', adminAuth, adminController.getItem);
+router.put('/data/:type/:id', adminAuth, adminController.updateItem);
+router.delete('/data/:type/:id', adminAuth, adminController.deleteItem);
+router.delete('/data/:type', adminAuth, adminController.clearItems);
 
 module.exports = router;

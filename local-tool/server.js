@@ -6,7 +6,6 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ─── Middleware ──────────────────────────────────────────────
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
@@ -17,7 +16,6 @@ const proxyToAdmin = async (req, res, endpoint, method = 'GET', body = null) => 
   const baseUrl = process.env.API_BASE_URL || 'https://scroll-city.onrender.com/api/admin';
 
   if (!adminSecret) {
-    console.error('❌ ADMIN_SECRET not set in .env');
     return res.status(500).json({ error: 'ADMIN_SECRET not set in environment' });
   }
 
@@ -41,7 +39,6 @@ const proxyToAdmin = async (req, res, endpoint, method = 'GET', body = null) => 
       return res.status(response.status).json({ error: data.error || 'Admin API error' });
     }
 
-    console.log(`✅ Admin API responded with ${response.status}`);
     res.json(data);
   } catch (err) {
     console.error('❌ Proxy error:', err.message);
@@ -49,7 +46,7 @@ const proxyToAdmin = async (req, res, endpoint, method = 'GET', body = null) => 
   }
 };
 
-// ─── Endpoint: seed from PDF ──────────────────────────────────
+// ─── Seed endpoint ──────────────────────────────────────────
 app.post('/seed', async (req, res) => {
   const { listings, stats, news, events } = req.body;
   const adminSecret = process.env.ADMIN_SECRET;
@@ -65,7 +62,6 @@ app.post('/seed', async (req, res) => {
     const sendBatch = async (endpoint, data) => {
       if (!data || data.length === 0) return { count: 0, response: 'No data' };
       const url = `${baseUrl}${endpoint}`;
-      console.log(`📤 POST ${url} with ${data.length} items`);
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -93,26 +89,22 @@ app.post('/seed', async (req, res) => {
   }
 });
 
-// ─── Admin proxy endpoints ────────────────────────────────────
+// ─── Admin proxy endpoints ──────────────────────────────────
 
 // Trending topics
 app.get('/admin/trending', async (req, res) => {
   const query = req.query.all === 'true' ? '?all=true' : '';
   await proxyToAdmin(req, res, `/trending${query}`);
 });
-
 app.get('/admin/trending/:id', async (req, res) => {
   await proxyToAdmin(req, res, `/trending/${req.params.id}`);
 });
-
 app.post('/admin/trending', async (req, res) => {
   await proxyToAdmin(req, res, '/trending', 'POST', req.body);
 });
-
 app.put('/admin/trending/:id', async (req, res) => {
   await proxyToAdmin(req, res, `/trending/${req.params.id}`, 'PUT', req.body);
 });
-
 app.delete('/admin/trending/:id', async (req, res) => {
   await proxyToAdmin(req, res, `/trending/${req.params.id}`, 'DELETE');
 });
@@ -127,10 +119,26 @@ app.get('/admin/status', async (req, res) => {
   await proxyToAdmin(req, res, '/data/status');
 });
 
-// ─── Health check ────────────────────────────────────────────
+// ─── Data CRUD proxy ──────────────────────────────────────────
+app.get('/admin/data/:type', async (req, res) => {
+  await proxyToAdmin(req, res, `/data/${req.params.type}`);
+});
+app.get('/admin/data/:type/:id', async (req, res) => {
+  await proxyToAdmin(req, res, `/data/${req.params.type}/${req.params.id}`);
+});
+app.put('/admin/data/:type/:id', async (req, res) => {
+  await proxyToAdmin(req, res, `/data/${req.params.type}/${req.params.id}`, 'PUT', req.body);
+});
+app.delete('/admin/data/:type/:id', async (req, res) => {
+  await proxyToAdmin(req, res, `/data/${req.params.type}/${req.params.id}`, 'DELETE');
+});
+app.delete('/admin/data/:type', async (req, res) => {
+  await proxyToAdmin(req, res, `/data/${req.params.type}`, 'DELETE');
+});
+
+// ─── Health ──────────────────────────────────────────────────
 app.get('/health', (req, res) => res.send('OK'));
 
-// ─── Start server ────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`🚀 Local tool running at http://localhost:${PORT}`);
   console.log(`   Using API_BASE: ${process.env.API_BASE_URL || 'https://scroll-city.onrender.com/api/admin'}`);

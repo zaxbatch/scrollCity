@@ -5,7 +5,18 @@ const Event = require('../models/Event');
 const BotPersona = require('../models/BotPersona');
 const User = require('../models/User');
 const Post = require('../models/Post');
-const TrendingTopic = require('../models/TrendingTopic'); // new
+const TrendingTopic = require('../models/TrendingTopic');
+
+// ─── Helper to get model by type ─────────────────────────────
+function getModel(type) {
+  switch (type) {
+    case 'listings': return Listing;
+    case 'stats': return MarketStat;
+    case 'news': return NewsItem;
+    case 'events': return Event;
+    default: throw new Error('Invalid type');
+  }
+}
 
 // ─── Upload data ──────────────────────────────────────────
 
@@ -87,7 +98,6 @@ exports.getDataStatus = async (req, res) => {
 
 // ─── Trending Topics CRUD ─────────────────────────────────────
 
-// Get all active topics (or all if admin)
 exports.getTrendingTopics = async (req, res) => {
   try {
     const filter = req.query.all === 'true' ? {} : { active: true };
@@ -98,7 +108,6 @@ exports.getTrendingTopics = async (req, res) => {
   }
 };
 
-// Get a single topic
 exports.getTrendingTopic = async (req, res) => {
   try {
     const topic = await TrendingTopic.findById(req.params.id);
@@ -109,7 +118,6 @@ exports.getTrendingTopic = async (req, res) => {
   }
 };
 
-// Create a new topic
 exports.createTrendingTopic = async (req, res) => {
   try {
     const { headline, detail, source } = req.body;
@@ -123,7 +131,6 @@ exports.createTrendingTopic = async (req, res) => {
   }
 };
 
-// Update a topic
 exports.updateTrendingTopic = async (req, res) => {
   try {
     const { headline, detail, source, active } = req.body;
@@ -140,12 +147,66 @@ exports.updateTrendingTopic = async (req, res) => {
   }
 };
 
-// Delete a topic
 exports.deleteTrendingTopic = async (req, res) => {
   try {
     const topic = await TrendingTopic.findByIdAndDelete(req.params.id);
     if (!topic) return res.status(404).json({ error: 'Topic not found' });
     res.json({ message: 'Topic deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ─── Generic CRUD for data types ──────────────────────────────
+
+exports.getItems = async (req, res) => {
+  try {
+    const model = getModel(req.params.type);
+    const items = await model.find().sort({ createdAt: -1 });
+    res.json(items);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getItem = async (req, res) => {
+  try {
+    const model = getModel(req.params.type);
+    const item = await model.findById(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.updateItem = async (req, res) => {
+  try {
+    const model = getModel(req.params.type);
+    const item = await model.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.deleteItem = async (req, res) => {
+  try {
+    const model = getModel(req.params.type);
+    const item = await model.findByIdAndDelete(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.clearItems = async (req, res) => {
+  try {
+    const model = getModel(req.params.type);
+    await model.deleteMany({});
+    res.json({ message: 'All items cleared' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
