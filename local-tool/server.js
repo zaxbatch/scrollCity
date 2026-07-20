@@ -48,7 +48,9 @@ const proxyToAdmin = async (req, res, endpoint, method = 'GET', body = null) => 
 
 // ─── Seed endpoint ──────────────────────────────────────────
 app.post('/seed', async (req, res) => {
-  const { listings, stats, news, events, media } = req.body;
+  const { listings, stats, news, events, media, trending } = req.body;
+  console.log(`📦 Received seed: ${listings?.length || 0} listings, ${stats?.length || 0} stats, ${news?.length || 0} news, ${events?.length || 0} events, ${media?.length || 0} media, ${trending?.length || 0} trending`);
+
   const adminSecret = process.env.ADMIN_SECRET;
   const baseUrl = process.env.API_BASE_URL || 'https://scroll-city.onrender.com/api/admin';
 
@@ -62,6 +64,7 @@ app.post('/seed', async (req, res) => {
     const sendBatch = async (endpoint, data) => {
       if (!data || data.length === 0) return { count: 0, response: 'No data' };
       const url = `${baseUrl}${endpoint}`;
+      console.log(`📤 POST ${url} with ${data.length} items`);
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -81,7 +84,33 @@ app.post('/seed', async (req, res) => {
     results.stats = await sendBatch('/data/stats', stats);
     results.news = await sendBatch('/data/news', news);
     results.events = await sendBatch('/data/events', events);
-    results.media = await sendBatch('/data/media', media); // <-- NEW
+    results.media = await sendBatch('/data/media', media);
+    // If you have a bulk trending endpoint, uncomment:
+    // results.trending = await sendBatch('/trending/bulk', trending);
+    // Otherwise, send individually:
+    if (trending && trending.length > 0) {
+      const trendResults = [];
+      for (const t of trending) {
+        const response = await fetch(`${baseUrl}/trending`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-secret': adminSecret
+          },
+          body: JSON.stringify(t)
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          console.error(`❌ Failed to add trending: ${text}`);
+          trendResults.push({ error: text });
+        } else {
+          trendResults.push(await response.json());
+        }
+      }
+      results.trending = { count: trendResults.length, response: 'Processed individually' };
+    } else {
+      results.trending = { count: 0, response: 'No data' };
+    }
 
     res.json({ success: true, results });
   } catch (error) {
@@ -91,8 +120,6 @@ app.post('/seed', async (req, res) => {
 });
 
 // ─── Admin proxy endpoints ──────────────────────────────────
-
-// Trending topics
 app.get('/admin/trending', async (req, res) => {
   const query = req.query.all === 'true' ? '?all=true' : '';
   await proxyToAdmin(req, res, `/trending${query}`);
@@ -110,12 +137,10 @@ app.delete('/admin/trending/:id', async (req, res) => {
   await proxyToAdmin(req, res, `/trending/${req.params.id}`, 'DELETE');
 });
 
-// Bots
 app.post('/admin/bots/trigger', async (req, res) => {
   await proxyToAdmin(req, res, '/bots/trigger', 'POST', req.body);
 });
 
-// Status
 app.get('/admin/status', async (req, res) => {
   await proxyToAdmin(req, res, '/data/status');
 });
@@ -127,7 +152,7 @@ app.get('/admin/data/:type', async (req, res) => {
 app.get('/admin/data/:type/:id', async (req, res) => {
   await proxyToAdmin(req, res, `/data/${req.params.type}/${req.params.id}`);
 });
-app.post('/admin/data/:type', async (req, res) => { // <-- NEW (for adding single items)
+app.post('/admin/data/:type', async (req, res) => {
   await proxyToAdmin(req, res, `/data/${req.params.type}`, 'POST', req.body);
 });
 app.put('/admin/data/:type/:id', async (req, res) => {
@@ -140,7 +165,6 @@ app.delete('/admin/data/:type', async (req, res) => {
   await proxyToAdmin(req, res, `/data/${req.params.type}`, 'DELETE');
 });
 
-// ─── Health ──────────────────────────────────────────────────
 app.get('/health', (req, res) => res.send('OK'));
 
 app.listen(PORT, () => {
