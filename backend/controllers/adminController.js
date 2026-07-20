@@ -6,7 +6,7 @@ const BotPersona = require('../models/BotPersona');
 const User = require('../models/User');
 const Post = require('../models/Post');
 const TrendingTopic = require('../models/TrendingTopic');
-const MediaItem = require('../models/MediaItem'); // <-- NEW
+const MediaItem = require('../models/MediaItem');
 
 // ─── Helper to get model by type ─────────────────────────────
 function getModel(type) {
@@ -15,7 +15,7 @@ function getModel(type) {
     case 'stats': return MarketStat;
     case 'news': return NewsItem;
     case 'events': return Event;
-    case 'media': return MediaItem; // <-- NEW
+    case 'media': return MediaItem;
     default: throw new Error('Invalid type');
   }
 }
@@ -68,15 +68,22 @@ exports.uploadEvents = async (req, res) => {
   }
 };
 
-// ─── NEW: Upload media ──────────────────────────────────────────
+// ─── Upload media (accepts both array and single object) ──────────
 exports.uploadMedia = async (req, res) => {
   try {
-    const media = req.body;
-    if (!Array.isArray(media)) {
-      return res.status(400).json({ error: 'Expected array of media items' });
+    let mediaItems = req.body;
+    
+    // If it's a single object, wrap it in an array
+    if (!Array.isArray(mediaItems)) {
+      mediaItems = [mediaItems];
     }
-    const inserted = await MediaItem.insertMany(media);
-    res.json({ message: `Inserted ${inserted.length} media items` });
+    
+    if (mediaItems.length === 0) {
+      return res.status(400).json({ error: 'No media items provided' });
+    }
+    
+    const inserted = await MediaItem.insertMany(mediaItems);
+    res.json({ message: `Inserted ${inserted.length} media item(s)` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -106,7 +113,7 @@ exports.getDataStatus = async (req, res) => {
     const events = await Event.countDocuments();
     const bots = await BotPersona.countDocuments();
     const trending = await TrendingTopic.countDocuments();
-    const media = await MediaItem.countDocuments(); // <-- NEW
+    const media = await MediaItem.countDocuments();
     res.json({ listings, stats, news, events, bots, trending, media });
   } catch (err) {
     res.status(500).json({ error: err.message });
