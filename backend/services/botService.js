@@ -67,16 +67,16 @@ const TRENDING_TOPICS = [
   }
 ];
 
-// ─── Call‑to‑action pool (plain URLs) ─────────────────────────
+// ─── Call‑to‑action pool (URL always followed by a space) ───
 const CTAS = [
   `🏠 Have questions about the Louisville market? Contact Zerric at ${WEBSITE_URL} – he's the local expert!`,
   `📞 Thinking of buying or selling? Zerric can help – visit ${WEBSITE_URL} to get started.`,
-  `📧 Want to know what your home is worth? Zerric offers free valuations – check out ${WEBSITE_URL}.`,
+  `📧 Want to know what your home is worth? Zerric offers free valuations – check out ${WEBSITE_URL} for more.`,
   `🔍 Seeing a home you like? Reach out to Zerric at ${WEBSITE_URL} for a private showing.`,
-  `📈 Not sure if now is the right time? Zerric can walk you through it – ${WEBSITE_URL}.`,
-  `🏡 Ready to make a move? Zerric is just a click away at ${WEBSITE_URL}.`,
+  `📈 Not sure if now is the right time? Zerric can walk you through it – visit ${WEBSITE_URL}.`,
+  `🏡 Ready to make a move? Zerric is just a click away at ${WEBSITE_URL} .`,
   `💬 Have questions about today's market? Zerric has the answers – visit ${WEBSITE_URL}.`,
-  `📱 Thinking of selling? Zerric can help you get top dollar – ${WEBSITE_URL}.`,
+  `📱 Thinking of selling? Zerric can help you get top dollar – visit ${WEBSITE_URL}.`,
   `🤔 Wondering what this means for you? Zerric can explain – reach out at ${WEBSITE_URL}.`,
   `🏘️ Looking for the perfect neighborhood? Zerric knows Louisville inside out – ${WEBSITE_URL}.`
 ];
