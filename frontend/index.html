@@ -25,6 +25,15 @@
     <!-- ANGULAR APP -->
     <div ng-app="scrollCityApp" ng-controller="ScrollCityCtrl">
 
+        <!-- MOBILE SIDEBAR TOGGLE (top-left) -->
+        <button class="sc-sidebar-toggle" ng-click="toggleSidebar()" ng-class="{'open': sidebarOpen}">
+            <i class="fas fa-bars"></i>
+            <i class="fas fa-times"></i>
+        </button>
+
+        <!-- OVERLAY (for mobile sidebar) -->
+        <div class="sc-sidebar-overlay" ng-class="{'active': sidebarOpen}" ng-click="toggleSidebar()"></div>
+
         <!-- MAIN LAYOUT -->
         <div class="sc-main-wrapper">
 
@@ -126,7 +135,6 @@
                                             Watch on YouTube
                                         </span>
                                     </div>
-                                    <!-- Stats with Share Button -->
                                     <div class="sc-post-stats">
                                         <span><i class="fas fa-heart" ng-class="{'liked': post.liked}" ng-click="toggleLike(post)"></i> {{post.likes.length}}</span>
                                         <span><i class="fas fa-comment" ng-click="toggleComments(post)"></i> {{post.comments.length}}</span>
@@ -237,13 +245,6 @@
             </aside>
         </div> <!-- /.sc-main-wrapper -->
 
-        <!-- MOBILE SIDEBAR TOGGLE -->
-        <button class="sc-sidebar-toggle" ng-click="toggleSidebar()" ng-class="{'open': sidebarOpen}">
-            <i class="fas fa-bars"></i>
-            <i class="fas fa-times"></i>
-        </button>
-        <div class="sc-sidebar-overlay" ng-class="{'active': sidebarOpen}" ng-click="toggleSidebar()"></div>
-
         <!-- MODALS -->
         <div class="sc-modal" id="sc-modal" ng-class="{'active': modalActive}">
             <div class="sc-modal-overlay" ng-click="closeModal()"></div>
@@ -330,21 +331,7 @@
             <div class="sc-modal-overlay" ng-click="closeLinkModal()"></div>
             <div class="sc-link-modal-content" ng-click="$event.stopPropagation()">
                 <button class="sc-link-modal-close" ng-click="closeLinkModal()">&times;</button>
-                <!-- Iframe -->
-                <div class="sc-link-modal-iframe-wrapper">
-                    <iframe ng-src="{{linkUrl}}" frameborder="0" allowfullscreen></iframe>
-                </div>
-                <!-- Footer with button and disclaimer -->
-                <div class="sc-link-modal-footer">
-                    <button class="sc-btn sc-btn-gold" ng-click="openLinkInNewTab()">
-                        <i class="fas fa-external-link-alt"></i> Open in new tab
-                    </button>
-                    <p class="sc-link-modal-disclaimer">
-                        <i class="fas fa-info-circle"></i>
-                        Some websites may not display in the embedded viewer due to security restrictions. 
-                        If you see a blank page, click "Open in new tab" to view directly.
-                    </p>
-                </div>
+                <iframe ng-src="{{linkUrl}}" frameborder="0" allowfullscreen></iframe>
             </div>
         </div>
 
