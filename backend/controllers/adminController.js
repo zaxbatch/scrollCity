@@ -5,11 +5,13 @@ const Event = require('../models/Event');
 const BotPersona = require('../models/BotPersona');
 const User = require('../models/User');
 const Post = require('../models/Post');
+const TrendingTopic = require('../models/TrendingTopic'); // new
 
 // ─── Upload data ──────────────────────────────────────────
+
 exports.uploadListings = async (req, res) => {
   try {
-    const listings = req.body; // expects array of listing objects
+    const listings = req.body;
     if (!Array.isArray(listings)) {
       return res.status(400).json({ error: 'Expected array of listings' });
     }
@@ -53,21 +55,22 @@ exports.uploadEvents = async (req, res) => {
   }
 };
 
-// ─── Trigger bot post ─────────────────────────────────────
+// ─── Trigger bot post ─────────────────────────────────────────
+
 exports.triggerBotPost = async (req, res) => {
   try {
     const { botUsername } = req.body;
-    // This will be called from the bot service; we'll implement later
-    // For now, we'll just call a function from botService
+    if (!botUsername) return res.status(400).json({ error: 'botUsername required' });
     const botService = require('../services/botService');
-    await botService.postFromBot(botUsername);
-    res.json({ message: `Bot ${botUsername} posted` });
+    const post = await botService.postFromBot(botUsername);
+    res.json({ message: `Bot ${botUsername} posted`, post });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// ─── Status ──────────────────────────────────────────────
+// ─── Data status ──────────────────────────────────────────────
+
 exports.getDataStatus = async (req, res) => {
   try {
     const listings = await Listing.countDocuments();
@@ -75,7 +78,74 @@ exports.getDataStatus = async (req, res) => {
     const news = await NewsItem.countDocuments();
     const events = await Event.countDocuments();
     const bots = await BotPersona.countDocuments();
-    res.json({ listings, stats, news, events, bots });
+    const trending = await TrendingTopic.countDocuments();
+    res.json({ listings, stats, news, events, bots, trending });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ─── Trending Topics CRUD ─────────────────────────────────────
+
+// Get all active topics (or all if admin)
+exports.getTrendingTopics = async (req, res) => {
+  try {
+    const filter = req.query.all === 'true' ? {} : { active: true };
+    const topics = await TrendingTopic.find(filter).sort({ createdAt: -1 });
+    res.json(topics);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get a single topic
+exports.getTrendingTopic = async (req, res) => {
+  try {
+    const topic = await TrendingTopic.findById(req.params.id);
+    if (!topic) return res.status(404).json({ error: 'Topic not found' });
+    res.json(topic);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Create a new topic
+exports.createTrendingTopic = async (req, res) => {
+  try {
+    const { headline, detail, source } = req.body;
+    if (!headline || !detail) {
+      return res.status(400).json({ error: 'Headline and detail are required' });
+    }
+    const topic = await TrendingTopic.create({ headline, detail, source, active: true });
+    res.status(201).json(topic);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Update a topic
+exports.updateTrendingTopic = async (req, res) => {
+  try {
+    const { headline, detail, source, active } = req.body;
+    const topic = await TrendingTopic.findById(req.params.id);
+    if (!topic) return res.status(404).json({ error: 'Topic not found' });
+    if (headline !== undefined) topic.headline = headline;
+    if (detail !== undefined) topic.detail = detail;
+    if (source !== undefined) topic.source = source;
+    if (active !== undefined) topic.active = active;
+    await topic.save();
+    res.json(topic);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Delete a topic
+exports.deleteTrendingTopic = async (req, res) => {
+  try {
+    const topic = await TrendingTopic.findByIdAndDelete(req.params.id);
+    if (!topic) return res.status(404).json({ error: 'Topic not found' });
+    res.json({ message: 'Topic deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

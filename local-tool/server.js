@@ -6,18 +6,54 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ─── Middleware ──────────────────────────────────────────────
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
 
-// ─── Forward parsed data to Admin API ──────────────────────
+// ─── Helper: proxy to admin API ─────────────────────────────
+const proxyToAdmin = async (req, res, endpoint, method = 'GET', body = null) => {
+  const adminSecret = process.env.ADMIN_SECRET;
+  const baseUrl = process.env.API_BASE_URL || 'https://scroll-city.onrender.com/api/admin';
+
+  if (!adminSecret) {
+    console.error('❌ ADMIN_SECRET not set in .env');
+    return res.status(500).json({ error: 'ADMIN_SECRET not set in environment' });
+  }
+
+  try {
+    const url = `${baseUrl}${endpoint}`;
+    console.log(`📤 ${method} ${url}`);
+    const options = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-secret': adminSecret
+      }
+    };
+    if (body) options.body = JSON.stringify(body);
+
+    const response = await fetch(url, options);
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(`❌ Admin API error (${response.status}):`, data);
+      return res.status(response.status).json({ error: data.error || 'Admin API error' });
+    }
+
+    console.log(`✅ Admin API responded with ${response.status}`);
+    res.json(data);
+  } catch (err) {
+    console.error('❌ Proxy error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ─── Endpoint: seed from PDF ──────────────────────────────────
 app.post('/seed', async (req, res) => {
   const { listings, stats, news, events } = req.body;
   const adminSecret = process.env.ADMIN_SECRET;
   const baseUrl = process.env.API_BASE_URL || 'https://scroll-city.onrender.com/api/admin';
-
-  console.log('🔐 Using admin secret:', adminSecret ? '✅ set' : '❌ MISSING');
-  console.log('🌐 Using API base URL:', baseUrl);
 
   if (!adminSecret) {
     return res.status(500).json({ error: 'ADMIN_SECRET not set in environment' });
@@ -30,7 +66,6 @@ app.post('/seed', async (req, res) => {
       if (!data || data.length === 0) return { count: 0, response: 'No data' };
       const url = `${baseUrl}${endpoint}`;
       console.log(`📤 POST ${url} with ${data.length} items`);
-
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -39,10 +74,7 @@ app.post('/seed', async (req, res) => {
         },
         body: JSON.stringify(data)
       });
-
       const text = await response.text();
-      console.log(`📥 Response ${response.status}:`, text.slice(0, 200));
-
       if (!response.ok) {
         throw new Error(`Upload to ${endpoint} failed: ${response.status} - ${text}`);
       }
@@ -57,12 +89,48 @@ app.post('/seed', async (req, res) => {
     res.json({ success: true, results });
   } catch (error) {
     console.error('❌ Seeding error:', error.message);
-    res.status(500).json({ error: error.message, details: error.stack });
+    res.status(500).json({ error: error.message });
   }
 });
 
+// ─── Admin proxy endpoints ────────────────────────────────────
+
+// Trending topics
+app.get('/admin/trending', async (req, res) => {
+  const query = req.query.all === 'true' ? '?all=true' : '';
+  await proxyToAdmin(req, res, `/trending${query}`);
+});
+
+app.get('/admin/trending/:id', async (req, res) => {
+  await proxyToAdmin(req, res, `/trending/${req.params.id}`);
+});
+
+app.post('/admin/trending', async (req, res) => {
+  await proxyToAdmin(req, res, '/trending', 'POST', req.body);
+});
+
+app.put('/admin/trending/:id', async (req, res) => {
+  await proxyToAdmin(req, res, `/trending/${req.params.id}`, 'PUT', req.body);
+});
+
+app.delete('/admin/trending/:id', async (req, res) => {
+  await proxyToAdmin(req, res, `/trending/${req.params.id}`, 'DELETE');
+});
+
+// Bots
+app.post('/admin/bots/trigger', async (req, res) => {
+  await proxyToAdmin(req, res, '/bots/trigger', 'POST', req.body);
+});
+
+// Status
+app.get('/admin/status', async (req, res) => {
+  await proxyToAdmin(req, res, '/data/status');
+});
+
+// ─── Health check ────────────────────────────────────────────
 app.get('/health', (req, res) => res.send('OK'));
 
+// ─── Start server ────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`🚀 Local tool running at http://localhost:${PORT}`);
   console.log(`   Using API_BASE: ${process.env.API_BASE_URL || 'https://scroll-city.onrender.com/api/admin'}`);
