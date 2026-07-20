@@ -115,6 +115,9 @@
             border-bottom: 1px solid #eee;
         }
         th { background: #f8f6f2; font-weight: 600; }
+        th input[type="checkbox"] { transform: scale(1.2); }
+        td input[type="checkbox"] { transform: scale(1.2); }
+
         .data-form { background: #fff; padding: 1rem; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 1.5rem; }
         .data-form .form-row { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 0.8rem; }
         .data-form .form-row > * { flex: 1; min-width: 150px; }
@@ -131,6 +134,18 @@
             gap: 0.3rem;
             font-weight: 500;
             cursor: pointer;
+        }
+
+        .table-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0 0.5rem 0;
+            align-items: center;
+        }
+        .table-actions .selected-count {
+            font-weight: 600;
+            color: #555;
         }
 
         @media (max-width: 640px) {
@@ -158,7 +173,6 @@
     <div id="tab-seed" class="tab-content active">
         <p>Upload a PDF, JSON, HTML, or paste text – we'll extract listings, stats, news, and events.</p>
 
-        <!-- File upload -->
         <div class="upload-area" id="dropZone">
             <label for="fileInput">
                 <i>📤</i>
@@ -167,7 +181,6 @@
             <input type="file" id="fileInput" accept=".pdf,.json,.html,.txt" />
         </div>
 
-        <!-- Manual text paste -->
         <div style="margin: 1rem 0;">
             <label for="manualTextInput"><strong>Or paste text here:</strong></label>
             <textarea id="manualTextInput" placeholder="Paste any text (e.g., from a report, webpage, or document)..." rows="4"></textarea>
@@ -177,7 +190,6 @@
             </div>
         </div>
 
-        <!-- Checkboxes for data types -->
         <div class="checkbox-group">
             <label><input type="checkbox" id="extractListings" checked /> 🏠 Listings</label>
             <label><input type="checkbox" id="extractStats" checked /> 📊 Stats</label>
@@ -199,7 +211,7 @@
         </div>
     </div>
 
-    <!-- ─── TAB: Listings (unchanged) ────────────────────────── -->
+    <!-- ─── TAB: Listings ────────────────────────────────────── -->
     <div id="tab-listings" class="tab-content">
         <h3>🏠 Manage Listings</h3>
         <div class="data-form">
@@ -267,7 +279,7 @@
         <div id="statTableContainer"><p>Loading...</p></div>
     </div>
 
-    <!-- ─── TAB: News ──────────────────────────────────────────── -->
+    <!-- ─── TAB: News ────────────────────────────────────────── -->
     <div id="tab-news" class="tab-content">
         <h3>📰 Manage News Items</h3>
         <div class="data-form">
@@ -438,7 +450,6 @@
                 reader.onload = function() {
                     try {
                         const json = JSON.parse(reader.result);
-                        // Assume it's an object with listings, stats, news, events arrays
                         parsedData = json;
                         displayParsedData(json);
                         setStatus('✅ JSON loaded successfully', 'success');
@@ -448,7 +459,6 @@
                 };
                 reader.readAsText(file);
             } else {
-                // HTML, TXT, or any text file – read as text
                 reader.onload = function() {
                     const text = reader.result;
                     parseAndDisplay(text);
@@ -511,7 +521,6 @@
             const news = [];
             const events = [];
 
-            // Read checkboxes
             const extractListings = document.getElementById('extractListings').checked;
             const extractStats = document.getElementById('extractStats').checked;
             const extractNews = document.getElementById('extractNews').checked;
@@ -519,7 +528,6 @@
 
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-            // ─── Listings ──────────────────────────────────────────────
             if (extractListings) {
                 const addressRegex = /\d{1,5}\s+[A-Za-z0-9\s.,]+(?:St|Ave|Rd|Blvd|Dr|Ln|Ct|Way|Pkwy|Parkway|Boulevard|Street|Avenue|Road|Lane|Court|Drive|Pl|Place|Cir|Circle|Terrace|Ter|Trl|Trail|Hwy|Highway)/i;
                 const priceRegex = /\$\s*([\d,]+)/;
@@ -565,7 +573,6 @@
                 }
             }
 
-            // ─── Stats ─────────────────────────────────────────────────
             if (extractStats) {
                 const statRegex = /(Median|Average|Total|New|Pending|Closed|Days on Market|Months of Inventory|Active Listings|List Price|Sold Price)\s*:?\s*(.*?)(?:\n|$)/i;
                 for (const line of lines) {
@@ -587,7 +594,6 @@
                 }
             }
 
-            // ─── News ─────────────────────────────────────────────────
             if (extractNews) {
                 const newsKeywords = ['approves', 'announced', 'new', 'breaks ground', 'development', 'market', 'prices', 'construction', 'grant'];
                 for (const line of lines) {
@@ -609,7 +615,6 @@
                 }
             }
 
-            // ─── Events ───────────────────────────────────────────────
             if (extractEvents) {
                 const eventKeywords = ['meeting', 'tour', 'webinar', 'open house', 'community', 'fair'];
                 for (const line of lines) {
@@ -625,7 +630,6 @@
                 }
             }
 
-            // Deduplicate listings by address
             const seen = new Set();
             const uniqueListings = listings.filter(l => {
                 const key = l.address + l.price;
@@ -711,14 +715,18 @@
             }
         }
 
-        // ─── CRUD functions ──────────────────────────────────────────
-        // (same as before – omitted for brevity, but they are exactly the same)
-        // I'll include them but you can keep your existing ones.
+        // ─── CRUD functions with bulk selection ──────────────────────
 
+        // Store selected item IDs for the current table type
+        let selectedIds = new Set();
+
+        // Load table with checkboxes
         async function loadTable(type) {
             const containerId = type + 'TableContainer';
             const container = document.getElementById(containerId);
             container.innerHTML = '<p>Loading...</p>';
+            // Reset selection
+            selectedIds.clear();
             try {
                 const res = await fetch(`/admin/data/${type}`);
                 if (!res.ok) throw new Error('Failed to fetch');
@@ -727,13 +735,22 @@
                     container.innerHTML = '<p>No items found.</p>';
                     return;
                 }
-                let html = `<table><thead><tr>`;
+                // Build table with checkbox column
                 const first = data[0];
                 const keys = Object.keys(first).filter(k => !['_id', '__v', 'createdAt', 'updatedAt'].includes(k));
+                let html = `<div class="table-actions">
+                    <button onclick="selectAllItems('${type}')" class="secondary" style="padding:0.2rem 0.8rem;">✅ Select All</button>
+                    <button onclick="deselectAllItems('${type}')" class="secondary" style="padding:0.2rem 0.8rem;">⬜ Deselect All</button>
+                    <button onclick="deleteSelectedItems('${type}')" class="danger" style="padding:0.2rem 0.8rem;">🗑️ Delete Selected</button>
+                    <span class="selected-count" id="selectedCount_${type}">0 selected</span>
+                </div>`;
+                html += `<table><thead><tr><th><input type="checkbox" id="selectAll_${type}" onchange="toggleSelectAll('${type}')" /></th>`;
                 keys.forEach(k => html += `<th>${k}</th>`);
                 html += `<th>Actions</th></tr></thead><tbody>`;
                 data.forEach(item => {
+                    const isChecked = selectedIds.has(item._id) ? 'checked' : '';
                     html += `<tr>`;
+                    html += `<td><input type="checkbox" class="item-checkbox" data-type="${type}" data-id="${item._id}" ${isChecked} onchange="updateSelection('${type}')" /></td>`;
                     keys.forEach(k => {
                         let val = item[k];
                         if (typeof val === 'object' && val !== null) val = JSON.stringify(val);
@@ -748,11 +765,85 @@
                 });
                 html += `</tbody></table>`;
                 container.innerHTML = html;
+                updateSelectedCount(type);
             } catch (err) {
                 container.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
             }
         }
 
+        // ─── Selection helpers ──────────────────────────────────────
+        function updateSelection(type) {
+            const checkboxes = document.querySelectorAll(`.item-checkbox[data-type="${type}"]`);
+            selectedIds.clear();
+            checkboxes.forEach(cb => {
+                if (cb.checked) selectedIds.add(cb.dataset.id);
+            });
+            updateSelectedCount(type);
+            // Update "Select All" checkbox state
+            const selectAll = document.getElementById(`selectAll_${type}`);
+            if (selectAll) {
+                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                selectAll.checked = allChecked;
+            }
+        }
+
+        function updateSelectedCount(type) {
+            const span = document.getElementById(`selectedCount_${type}`);
+            if (span) span.textContent = `${selectedIds.size} selected`;
+        }
+
+        function toggleSelectAll(type) {
+            const selectAll = document.getElementById(`selectAll_${type}`);
+            const checkboxes = document.querySelectorAll(`.item-checkbox[data-type="${type}"]`);
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+            });
+            updateSelection(type);
+        }
+
+        function selectAllItems(type) {
+            const checkboxes = document.querySelectorAll(`.item-checkbox[data-type="${type}"]`);
+            checkboxes.forEach(cb => cb.checked = true);
+            updateSelection(type);
+        }
+
+        function deselectAllItems(type) {
+            const checkboxes = document.querySelectorAll(`.item-checkbox[data-type="${type}"]`);
+            checkboxes.forEach(cb => cb.checked = false);
+            updateSelection(type);
+        }
+
+        // ─── Delete selected ──────────────────────────────────────────
+        async function deleteSelectedItems(type) {
+            const ids = Array.from(selectedIds);
+            if (ids.length === 0) {
+                alert('No items selected.');
+                return;
+            }
+            if (!confirm(`Delete ${ids.length} selected item(s) permanently?`)) return;
+            // Disable UI temporarily
+            const btn = document.querySelector(`.table-actions .danger`);
+            if (btn) btn.disabled = true;
+            try {
+                const deletePromises = ids.map(id =>
+                    fetch(`/admin/data/${type}/${id}`, { method: 'DELETE' })
+                );
+                const results = await Promise.all(deletePromises);
+                const failed = results.filter(r => !r.ok).length;
+                if (failed > 0) {
+                    alert(`Deleted ${ids.length - failed} items, ${failed} failed.`);
+                } else {
+                    alert(`✅ ${ids.length} items deleted successfully.`);
+                }
+                loadTable(type);
+            } catch (err) {
+                alert('Error during deletion: ' + err.message);
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        // ─── Existing single item functions ──────────────────────────
         async function addItem(type) {
             const form = document.querySelector(`#tab-${type} .data-form`);
             const data = {};
