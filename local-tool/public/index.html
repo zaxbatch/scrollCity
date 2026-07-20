@@ -6,7 +6,7 @@
     <title>Scroll-City · Admin Tool</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
-        /* (keep all existing styles – unchanged) */
+        /* (all existing styles – unchanged) */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -165,7 +165,7 @@
         <button class="tab-btn" data-tab="stats">📊 Stats</button>
         <button class="tab-btn" data-tab="news">📰 News</button>
         <button class="tab-btn" data-tab="events">📅 Events</button>
-        <button class="tab-btn" data-tab="media">🎬 Media</button> <!-- NEW -->
+        <button class="tab-btn" data-tab="media">🎬 Media</button>
         <button class="tab-btn" data-tab="trending">📈 Trending</button>
         <button class="tab-btn" data-tab="bots">🤖 Bots</button>
         <button class="tab-btn" data-tab="dashboard">📊 Dashboard</button>
@@ -173,7 +173,7 @@
 
     <!-- ─── TAB: Seed PDF ────────────────────────────────────── -->
     <div id="tab-seed" class="tab-content active">
-        <p>Upload a PDF, JSON, HTML, or paste text – we'll extract listings, stats, news, events, and trending topics.</p>
+        <p>Upload a PDF, JSON, HTML, or paste text – we'll extract listings, stats, news, events, trending topics, and media.</p>
 
         <div class="upload-area" id="dropZone">
             <label for="fileInput">
@@ -198,6 +198,7 @@
             <label><input type="checkbox" id="extractNews" checked /> 📰 News</label>
             <label><input type="checkbox" id="extractEvents" checked /> 📅 Events</label>
             <label><input type="checkbox" id="extractTrending" checked /> 📈 Trending Topics</label>
+            <label><input type="checkbox" id="extractMedia" checked /> 🎬 Media</label> <!-- NEW -->
         </div>
 
         <div id="status" class="status">📎 Ready</div>
@@ -216,6 +217,7 @@
 
     <!-- ─── TAB: Listings ────────────────────────────────────────── -->
     <div id="tab-listings" class="tab-content">
+        <!-- (same as before – no changes) -->
         <h3>🏠 Manage Listings</h3>
         <div class="data-form">
             <h4>Add New Listing</h4>
@@ -261,6 +263,7 @@
 
     <!-- ─── TAB: Stats ────────────────────────────────────────────── -->
     <div id="tab-stats" class="tab-content">
+        <!-- (same as before) -->
         <h3>📊 Manage Market Stats</h3>
         <div class="data-form">
             <h4>Add New Stat</h4>
@@ -287,6 +290,7 @@
 
     <!-- ─── TAB: News ────────────────────────────────────────────── -->
     <div id="tab-news" class="tab-content">
+        <!-- (same as before) -->
         <h3>📰 Manage News Items</h3>
         <div class="data-form">
             <h4>Add New News</h4>
@@ -314,6 +318,7 @@
 
     <!-- ─── TAB: Events ────────────────────────────────────────────── -->
     <div id="tab-events" class="tab-content">
+        <!-- (same as before) -->
         <h3>📅 Manage Events</h3>
         <div class="data-form">
             <h4>Add New Event</h4>
@@ -339,7 +344,7 @@
         <div id="eventTableContainer"><p>Loading...</p></div>
     </div>
 
-    <!-- ─── TAB: Media (NEW) ────────────────────────────────────────── -->
+    <!-- ─── TAB: Media ────────────────────────────────────────────── -->
     <div id="tab-media" class="tab-content">
         <h3>🎬 Manage Media</h3>
         <div class="data-form">
@@ -415,7 +420,7 @@
             stats: document.getElementById('tab-stats'),
             news: document.getElementById('tab-news'),
             events: document.getElementById('tab-events'),
-            media: document.getElementById('tab-media'), // NEW
+            media: document.getElementById('tab-media'),
             trending: document.getElementById('tab-trending'),
             bots: document.getElementById('tab-bots'),
             dashboard: document.getElementById('tab-dashboard')
@@ -432,7 +437,7 @@
                 else if (tab === 'stats') loadTable('stats');
                 else if (tab === 'news') loadTable('news');
                 else if (tab === 'events') loadTable('events');
-                else if (tab === 'media') loadTable('media'); // NEW
+                else if (tab === 'media') loadTable('media');
                 else if (tab === 'trending') loadTopics();
                 else if (tab === 'bots') loadBots();
                 else if (tab === 'dashboard') loadDashboard();
@@ -507,8 +512,8 @@
             const parsed = parseText(text);
             parsedData = parsed;
             displayParsedData(parsed);
-            const total = parsed.listings.length + parsed.stats.length + parsed.news.length + parsed.events.length + parsed.trending.length;
-            setStatus(`✅ Extracted: ${parsed.listings.length} listings, ${parsed.stats.length} stats, ${parsed.news.length} news, ${parsed.events.length} events, ${parsed.trending.length} trending topics (${total} total items)`, 'success');
+            const total = parsed.listings.length + parsed.stats.length + parsed.news.length + parsed.events.length + parsed.trending.length + parsed.media.length;
+            setStatus(`✅ Extracted: ${parsed.listings.length} listings, ${parsed.stats.length} stats, ${parsed.news.length} news, ${parsed.events.length} events, ${parsed.trending.length} trending topics, ${parsed.media.length} media items (${total} total items)`, 'success');
         }
 
         // ─── Display parsed data ─────────────────────────────────────
@@ -548,45 +553,75 @@
             });
         }
 
-        // ─── Full parser ─────────────────────────────────────────────
+        // ─── Full parser (with media placeholder) ──────────────────────
         function parseText(text) {
             const listings = [];
             const stats = [];
             const news = [];
             const events = [];
             const trending = [];
+            const media = []; // NEW
 
             const extractListings = document.getElementById('extractListings').checked;
             const extractStats = document.getElementById('extractStats').checked;
             const extractNews = document.getElementById('extractNews').checked;
             const extractEvents = document.getElementById('extractEvents').checked;
             const extractTrending = document.getElementById('extractTrending').checked;
+            const extractMedia = document.getElementById('extractMedia').checked; // NEW
 
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
             // ─── Listings ──────────────────────────────────────────────
             if (extractListings) {
-                // (same as before – keep your existing parser)
+                // (keep your existing listing parser – unchanged)
             }
 
             // ─── Stats ─────────────────────────────────────────────────
             if (extractStats) {
-                // (same as before)
+                // (unchanged)
             }
 
             // ─── News ─────────────────────────────────────────────────
             if (extractNews) {
-                // (same as before)
+                // (unchanged)
             }
 
             // ─── Events ───────────────────────────────────────────────
             if (extractEvents) {
-                // (same as before)
+                // (unchanged)
             }
 
             // ─── Trending Topics ──────────────────────────────────────
             if (extractTrending) {
-                // (same as before)
+                // (unchanged)
+            }
+
+            // ─── Media ────────────────────────────────────────────────
+            if (extractMedia) {
+                // Placeholder: look for image/video URLs or media-like content
+                // For now, we'll just add a dummy entry if any URL looks like media.
+                // You can expand this later.
+                const mediaRegex = /(\.(jpg|jpeg|png|gif|webp|svg|mp4|mov|avi|youtube\.com|youtu\.be|vimeo\.com))/i;
+                for (const line of lines) {
+                    if (mediaRegex.test(line) && line.length > 10 && line.length < 300) {
+                        // Try to extract title and URL
+                        let title = line.slice(0, 60);
+                        let url = line.match(/https?:\/\/[^\s]+/)?.[0] || '';
+                        let description = line.replace(url, '').trim();
+                        if (url) {
+                            const type = url.includes('youtube') || url.includes('youtu.be') || url.includes('vimeo') ? 'video' : 'image';
+                            media.push({
+                                title: title.slice(0, 80),
+                                description: description.slice(0, 120),
+                                type: type,
+                                url: url,
+                                thumbnail: '',
+                                source: 'PDF Import',
+                                active: true
+                            });
+                        }
+                    }
+                }
             }
 
             // Deduplicate listings by address
@@ -603,7 +638,8 @@
                 stats: stats.slice(0, 20),
                 news: news.slice(0, 10),
                 events: events.slice(0, 5),
-                trending: trending.slice(0, 10)
+                trending: trending.slice(0, 10),
+                media: media.slice(0, 10)
             };
         }
 
@@ -641,7 +677,7 @@
                 alert('No data to seed. Please upload or parse text first.');
                 return;
             }
-            if (!parsedData.listings.length && !parsedData.stats.length && !parsedData.news.length && !parsedData.events.length && !parsedData.trending.length) {
+            if (!parsedData.listings.length && !parsedData.stats.length && !parsedData.news.length && !parsedData.events.length && !parsedData.trending.length && !parsedData.media.length) {
                 alert('No data found to seed. Check your checkboxes and try again.');
                 return;
             }
@@ -828,7 +864,7 @@
                 else if (id === 'eventType') data.type = el.value;
                 else if (id.includes('Date')) data.startDate = new Date(el.value);
                 else if (id === 'listingUrl') data.url = el.value;
-                // ─── NEW: Media fields ──────────────────────────────
+                // ─── Media fields ──────────────────────────────────
                 else if (id === 'mediaTitle') data.title = el.value;
                 else if (id === 'mediaType') data.type = el.value;
                 else if (id === 'mediaUrl') data.url = el.value;
@@ -1019,7 +1055,7 @@
                     { label: 'Events', value: data.events },
                     { label: 'Bots', value: data.bots },
                     { label: 'Trending Topics', value: data.trending || 0 },
-                    { label: 'Media', value: data.media || 0 } // NEW
+                    { label: 'Media', value: data.media || 0 }
                 ];
                 container.innerHTML = items.map(i =>
                     `<div class="card"><h3>${i.value}</h3><p>${i.label}</p></div>`
