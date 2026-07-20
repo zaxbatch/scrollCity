@@ -1378,7 +1378,15 @@ footer:hover {
 
 /* ── Responsive ───────────────────────────────────── */
 
-/* Mobile sidebar toggle and overlay – only visible on small screens */
+/* Hide toggle button on desktop (screens > 768px) */
+@media (min-width: 769px) {
+    .sc-sidebar-toggle,
+    .sc-sidebar-overlay {
+        display: none !important;
+    }
+}
+
+/* Mobile styles (<= 768px) */
 @media (max-width: 768px) {
     /* Toggle button – fixed top‑left */
     .sc-sidebar-toggle {
@@ -1437,31 +1445,9 @@ footer:hover {
     .sc-sidebar-right.open {
         transform: translateX(0);
     }
-
-    /* Ensure the toggle and overlay are hidden on larger screens */
-    @media (min-width: 769px) {
-        .sc-sidebar-toggle,
-        .sc-sidebar-overlay {
-            display: none !important;
-        }
-        .sc-sidebar-right {
-            position: static;
-            transform: none;
-            box-shadow: none;
-            padding: 0;
-            background: transparent;
-            z-index: auto;
-            width: auto;
-            height: auto;
-            overflow-y: visible;
-        }
-        .sc-sidebar-right.open {
-            transform: none;
-        }
-    }
 }
 
-/* Other existing responsive styles */
+/* Other existing responsive styles (unchanged) */
 @media (max-width: 1024px) {
     .sc-main-wrapper { flex-wrap: wrap; gap: 1.5rem; padding: 0 1rem; }
     .sc-sidebar {
