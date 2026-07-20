@@ -6,7 +6,7 @@
   <title>Scroll-City · Admin Tool</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
-    /* (keep all existing styles – unchanged) */
+    /* (all existing styles – unchanged) */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -509,7 +509,7 @@
       });
     }
 
-    // ─── Enhanced parser ─────────────────────────────────────────
+    // ─── Safe parser (known working version) ──────────────────────
     function parseText(text) {
       const listings = [];
       const stats = [];
@@ -525,79 +525,44 @@
       const extractTrending = document.getElementById('extractTrending').checked;
       const extractMedia = document.getElementById('extractMedia').checked;
 
-      // Normalize: replace multiple spaces/newlines
-      const normalized = text.replace(/\s+/g, ' ').trim();
-      const lines = normalized.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-      let currentSection = '';
+      // ─── Listings ──────────────────────────────────────────────
+      if (extractListings) {
+        const addressRegex = /\d{1,5}\s+[A-Za-z0-9\s.,]+(?:St|Ave|Rd|Blvd|Dr|Ln|Ct|Way|Pkwy|Parkway|Boulevard|Street|Avenue|Road|Lane|Court|Drive|Pl|Place|Cir|Circle|Terrace|Ter|Trl|Trail|Hwy|Highway)/i;
+        const priceRegex = /\$\s*([\d,]+)/;
+        const bedsRegex = /(\d+)\s*(?:bed|br|bedroom)/i;
+        const bathsRegex = /(\d+\.?\d*)\s*(?:bath|ba|bathroom)/i;
+        const sqftRegex = /(\d+[,.\d]*)\s*(?:sq\s*ft|sqft|square\s*feet?)/i;
+        const mlsRegex = /MLS\s*ID:\s*([A-Z0-9]+)/i;
 
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
+        let i = 0;
+        while (i < lines.length) {
+          const line = lines[i];
+          if (addressRegex.test(line) || line.includes('MLS ID')) {
+            let address = line.match(addressRegex)?.[0] || '';
+            let priceMatch = line.match(priceRegex) || lines[i+1]?.match(priceRegex);
+            let price = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : null;
+            let beds = line.match(bedsRegex)?.[1] || lines[i+1]?.match(bedsRegex)?.[1] || null;
+            let baths = line.match(bathsRegex)?.[1] || lines[i+1]?.match(bathsRegex)?.[1] || null;
+            let sqft = line.match(sqftRegex)?.[1] || lines[i+1]?.match(sqftRegex)?.[1] || null;
+            let mls = line.match(mlsRegex)?.[1] || lines[i+1]?.match(mlsRegex)?.[1] || null;
+            let status = 'Active';
+            if (line.includes('Pending') || (lines[i+1] && lines[i+1].includes('Pending'))) status = 'Pending';
+            if (line.includes('Closed') || (lines[i+1] && lines[i+1].includes('Closed'))) status = 'Closed';
 
-        // Detect section headers
-        if (/LISTINGS/i.test(line) && /TABLE/i.test(line)) {
-          currentSection = 'listings';
-          continue;
-        }
-        if (/MARKET STATS/i.test(line)) {
-          currentSection = 'stats';
-          continue;
-        }
-        if (/NEWS HEADLINES/i.test(line)) {
-          currentSection = 'news';
-          continue;
-        }
-        if (/UPCOMING EVENTS/i.test(line)) {
-          currentSection = 'events';
-          continue;
-        }
-        if (/TRENDING TOPICS/i.test(line)) {
-          currentSection = 'trending';
-          continue;
-        }
-        if (/MEDIA/i.test(line)) {
-          currentSection = 'media';
-          continue;
-        }
-
-        // Skip separators
-        if (/[-=_*]{10,}/.test(line)) continue;
-
-        // ─── Listings ──────────────────────────────────────────────
-        if (currentSection === 'listings' && extractListings) {
-          const addrPrice = line.match(/^([A-Za-z0-9\s.,]+?)\s+(\$\s*[\d,]+)/);
-          if (addrPrice) {
-            const address = addrPrice[1].trim();
-            const price = parseInt(addrPrice[2].replace(/[$,]/g, ''));
-            let beds = null, baths = null, sqft = null, status = 'Active', mls = '';
-            const bedsMatch = line.match(/\b(\d+)\s*(?:bed|br)\b/i);
-            const bathsMatch = line.match(/\b(\d+\.?\d*)\s*(?:bath|ba)\b/i);
-            const sqftMatch = line.match(/\b([\d,]+)\s*(?:sq\s*ft|sqft)\b/i);
-            const statusMatch = line.match(/\b(Active|Pending|Closed|Under Contract|Sold)\b/i);
-            const mlsMatch = line.match(/MLS\s*ID:\s*([A-Z0-9\-]+)/i);
-            if (bedsMatch) beds = parseInt(bedsMatch[1]);
-            if (bathsMatch) baths = parseFloat(bathsMatch[1]);
-            if (sqftMatch) sqft = parseInt(sqftMatch[1].replace(/,/g, ''));
-            if (statusMatch) status = statusMatch[1];
-            if (mlsMatch) mls = mlsMatch[1];
-            if ((!beds || !baths || !sqft) && i + 1 < lines.length) {
-              const nextLine = lines[i + 1];
-              const bedsNext = nextLine.match(/\b(\d+)\s*(?:bed|br)\b/i);
-              const bathsNext = nextLine.match(/\b(\d+\.?\d*)\s*(?:bath|ba)\b/i);
-              const sqftNext = nextLine.match(/\b([\d,]+)\s*(?:sq\s*ft|sqft)\b/i);
-              if (bedsNext && !beds) beds = parseInt(bedsNext[1]);
-              if (bathsNext && !baths) baths = parseFloat(bathsNext[1]);
-              if (sqftNext && !sqft) sqft = parseInt(sqftNext[1].replace(/,/g, ''));
-            }
             if (address && price) {
               const zipMatch = address.match(/\b(\d{5})\b/);
               const zip = zipMatch ? zipMatch[1] : '';
               listings.push({
-                address, city: 'Louisville', state: 'KY', zip,
+                address,
+                city: 'Louisville',
+                state: 'KY',
+                zip,
                 price,
-                bedrooms: beds || null,
-                bathrooms: baths || null,
-                sqft: sqft || null,
+                bedrooms: beds ? parseInt(beds) : null,
+                bathrooms: baths ? parseFloat(baths) : null,
+                sqft: sqft ? parseInt(sqft.replace(/,/g, '')) : null,
                 propertyType: 'Single Family',
                 status: status || 'Active',
                 description: `MLS ID: ${mls || 'N/A'}`,
@@ -606,109 +571,123 @@
               });
             }
           }
-        }
-
-        // ─── Stats ──────────────────────────────────────────────────
-        if (currentSection === 'stats' && extractStats) {
-          const statMatch = line.match(/^([^:]+)\s*:\s*(.*)$/);
-          if (statMatch) {
-            const metric = statMatch[1].trim();
-            const value = statMatch[2].trim().replace(/,$/, '');
-            if (metric && value && /\d/.test(value)) {
-              stats.push({ metric, value, region: 'Louisville, KY', category: 'Price', source: 'PDF Report', date: new Date() });
-            }
-          }
-        }
-
-        // ─── News ──────────────────────────────────────────────────
-        if (currentSection === 'news' && extractNews) {
-          const newsMatch = line.match(/^(\d+\.)\s*(.*?)(?:\.\s*|$)/);
-          if (newsMatch) {
-            const headline = newsMatch[2].trim();
-            let summary = '';
-            let j = i + 1;
-            while (j < lines.length && !/^\d+\./.test(lines[j]) && !/^-+/.test(lines[j]) && !/^Source:/i.test(lines[j])) {
-              summary += ' ' + lines[j];
-              j++;
-            }
-            summary = summary.trim();
-            if (headline && headline.length > 10) {
-              news.push({ headline: headline.slice(0, 100), summary: summary.slice(0, 200) || headline.slice(0, 150), category: 'Market', source: 'PDF Report', link: '' });
-            }
-          }
-        }
-
-        // ─── Events ─────────────────────────────────────────────────
-        if (currentSection === 'events' && extractEvents) {
-          const titleMatch = line.match(/^(\d+\.)\s*(.*?)\s*$/);
-          if (titleMatch) {
-            const title = titleMatch[2].trim();
-            let description = '', location = '';
-            let startDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-            let j = i + 1;
-            while (j < lines.length && !/^\d+\./.test(lines[j]) && !/^-+/.test(lines[j])) {
-              const detail = lines[j];
-              if (/Date:/i.test(detail)) {
-                const dateStr = detail.replace(/Date:/i, '').trim();
-                const parsed = new Date(dateStr);
-                if (!isNaN(parsed)) startDate = parsed;
-              } else if (/Location:/i.test(detail)) {
-                location = detail.replace(/Location:/i, '').trim();
-              } else if (/Description:/i.test(detail)) {
-                description = detail.replace(/Description:/i, '').trim();
-              } else {
-                description += ' ' + detail;
-              }
-              j++;
-            }
-            description = description.trim();
-            if (title) {
-              events.push({ title: title.slice(0, 80), description: description.slice(0, 120) || title, location: location || 'Louisville, KY', startDate, endDate: null, type: 'Other', link: '' });
-            }
-          }
-        }
-
-        // ─── Trending ──────────────────────────────────────────────
-        if (currentSection === 'trending' && extractTrending) {
-          const trendMatch = line.match(/^[-•*]\s*(.*)$/);
-          if (trendMatch) {
-            const headline = trendMatch[1].trim();
-            let detail = '';
-            let j = i + 1;
-            while (j < lines.length && !/^[-•*]/.test(lines[j]) && !/^-+/.test(lines[j])) {
-              detail += ' ' + lines[j];
-              j++;
-            }
-            detail = detail.trim() || 'Market trend in Kentucky.';
-            if (headline) {
-              trending.push({ headline: headline.slice(0, 100), detail: detail.slice(0, 200), source: 'PDF Report', active: true });
-            }
-          }
-        }
-
-        // ─── Media ──────────────────────────────────────────────────
-        if (currentSection === 'media' && extractMedia) {
-          const urlMatch = line.match(/(https?:\/\/[^\s]+)/);
-          if (urlMatch) {
-            const url = urlMatch[1];
-            let title = '';
-            const prefixMatch = line.match(/^(Video|Image):\s*(.*?)\s*$/i);
-            if (prefixMatch) {
-              title = prefixMatch[2].trim();
-            } else {
-              title = line.replace(url, '').trim().slice(0, 80) || 'Media item';
-            }
-            const type = url.includes('youtube') || url.includes('youtu.be') || url.includes('vimeo') ? 'video' : 'image';
-            media.push({ title: title.slice(0, 80), description: title.slice(0, 120), type, url, thumbnail: '', source: 'PDF Import', active: true });
-          }
-        }
-
-        // Reset section
-        if (/================================================================================/.test(line)) {
-          currentSection = '';
+          i++;
         }
       }
 
+      // ─── Stats ──────────────────────────────────────────────────
+      if (extractStats) {
+        const statRegex = /(Median|Average|Total|New|Pending|Closed|Days on Market|Months of Inventory|Active Listings|List Price|Sold Price)\s*:?\s*(.*?)(?:\n|$)/i;
+        for (const line of lines) {
+          const match = line.match(statRegex);
+          if (match) {
+            const metric = match[1].trim();
+            const value = match[2].trim().replace(/,$/, '');
+            if (metric && value && /\d/.test(value)) {
+              stats.push({
+                metric,
+                value,
+                region: 'Louisville, KY',
+                category: 'Price',
+                source: 'PDF Report',
+                date: new Date()
+              });
+            }
+          }
+        }
+      }
+
+      // ─── News ──────────────────────────────────────────────────
+      if (extractNews) {
+        const newsKeywords = ['approves', 'announced', 'new', 'breaks ground', 'development', 'market', 'prices', 'construction', 'grant'];
+        for (const line of lines) {
+          if (newsKeywords.some(kw => line.toLowerCase().includes(kw)) && line.length > 30 && line.length < 200) {
+            let headline = line;
+            let summary = '';
+            if (line.includes('.')) {
+              const parts = line.split('.');
+              headline = parts[0] + '.';
+              summary = parts.slice(1).join('. ').trim();
+            }
+            news.push({
+              headline: headline.slice(0, 100),
+              summary: summary || line.slice(0, 150),
+              category: 'Market',
+              source: 'PDF Report',
+              link: ''
+            });
+          }
+        }
+      }
+
+      // ─── Events ─────────────────────────────────────────────────
+      if (extractEvents) {
+        const eventKeywords = ['meeting', 'tour', 'webinar', 'open house', 'community', 'fair'];
+        for (const line of lines) {
+          if (eventKeywords.some(kw => line.toLowerCase().includes(kw)) && /\d{1,2}\/\d{1,2}/.test(line)) {
+            events.push({
+              title: line.slice(0, 80),
+              description: line.slice(0, 120),
+              location: 'Louisville, KY',
+              startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              type: 'Other',
+              link: ''
+            });
+          }
+        }
+      }
+
+      // ─── Trending ──────────────────────────────────────────────
+      if (extractTrending) {
+        const trendKeywords = ['inventory', 'market', 'prices', 'development', 'housing', 'sales', 'growth', 'demand', 'supply', 'approves', 'announced', 'new'];
+        for (const line of lines) {
+          if (trendKeywords.some(kw => line.toLowerCase().includes(kw)) && line.length > 20 && line.length < 200) {
+            let headline = line;
+            let detail = '';
+            if (line.includes('.')) {
+              const parts = line.split('.');
+              headline = parts[0] + '.';
+              detail = parts.slice(1).join('. ').trim();
+            }
+            const exists = trending.some(t => t.headline.toLowerCase() === headline.toLowerCase());
+            if (!exists) {
+              trending.push({
+                headline: headline.slice(0, 100),
+                detail: detail || line.slice(0, 200),
+                source: 'PDF Report',
+                active: true
+              });
+            }
+          }
+        }
+      }
+
+      // ─── Media ──────────────────────────────────────────────────
+      if (extractMedia) {
+        const mediaRegex = /(\.(jpg|jpeg|png|gif|webp|svg|mp4|mov|avi|youtube\.com|youtu\.be|vimeo\.com))/i;
+        for (const line of lines) {
+          if (mediaRegex.test(line) && line.length > 10 && line.length < 300) {
+            let title = line.slice(0, 60);
+            const urlMatch = line.match(/https?:\/\/[^\s]+/);
+            const url = urlMatch ? urlMatch[0] : '';
+            let description = line.replace(url, '').trim();
+            if (url) {
+              const type = url.includes('youtube') || url.includes('youtu.be') || url.includes('vimeo') ? 'video' : 'image';
+              media.push({
+                title: title.slice(0, 80),
+                description: description.slice(0, 120),
+                type,
+                url,
+                thumbnail: '',
+                source: 'PDF Import',
+                active: true
+              });
+            }
+          }
+        }
+      }
+
+      // Deduplicate listings by address
       const seen = new Set();
       const uniqueListings = listings.filter(l => {
         const key = l.address + l.price;
@@ -839,7 +818,6 @@
     }
 
     async function addItem(type) {
-      // This is a placeholder – you can implement full add logic if needed.
       alert('Add item functionality is implemented in the full version.');
     }
 
