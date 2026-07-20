@@ -28,5 +28,6 @@ router.get('/data/:type/:id', adminAuth, adminController.getItem);
 router.put('/data/:type/:id', adminAuth, adminController.updateItem);
 router.delete('/data/:type/:id', adminAuth, adminController.deleteItem);
 router.delete('/data/:type', adminAuth, adminController.clearItems);
+router.get('/test', adminAuth, (req, res) => res.json({ message: 'Admin routes are working' }));
 
 module.exports = router;
