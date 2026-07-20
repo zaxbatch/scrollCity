@@ -1211,6 +1211,8 @@ footer {
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     cursor: default;
+    display: flex;
+    flex-direction: column;
 }
 .sc-link-modal-content iframe {
     width: 100%;
@@ -1237,6 +1239,32 @@ footer {
 }
 .sc-link-modal-close:hover {
     background: rgba(0, 0, 0, 0.8);
+}
+.sc-link-modal-footer {
+    background: #f8f6f2;
+    padding: 0.8rem 1.5rem;
+    border-top: 1px solid #e2ddd6;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    flex-shrink: 0;
+}
+.sc-link-modal-footer .sc-btn {
+    padding: 0.4rem 1.2rem;
+    font-size: 0.9rem;
+}
+.sc-link-modal-disclaimer {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.sc-link-modal-disclaimer i {
+    color: #FACC0F;
 }
 
 /* ── Page Placeholders ───────────────────────────── */
@@ -1444,6 +1472,35 @@ footer:hover {
     }
     .sc-sidebar-right.open {
         transform: translateX(0);
+    }
+
+    /* ─── Link Modal mobile fix ────────────────────── */
+    .sc-link-modal-content {
+        height: 95vh;
+        max-height: 95vh;
+    }
+    .sc-link-modal-footer {
+        padding: 0.5rem 0.8rem;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .sc-link-modal-footer .sc-btn {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.8rem;
+    }
+    .sc-link-modal-disclaimer {
+        font-size: 0.6rem;
+        text-align: center;
+        justify-content: center;
+    }
+    .sc-link-modal-close {
+        top: 5px;
+        right: 10px;
+        font-size: 1.5rem;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
     }
 }
 
