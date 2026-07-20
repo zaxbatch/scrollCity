@@ -169,7 +169,7 @@
         <button class="tab-btn" data-tab="dashboard">📊 Dashboard</button>
     </div>
 
-    <!-- ─── TAB: Seed PDF (enhanced) ────────────────────────── -->
+    <!-- ─── TAB: Seed PDF ────────────────────────────────────────── -->
     <div id="tab-seed" class="tab-content active">
         <p>Upload a PDF, JSON, HTML, or paste text – we'll extract listings, stats, news, and events.</p>
 
@@ -211,7 +211,7 @@
         </div>
     </div>
 
-    <!-- ─── TAB: Listings ────────────────────────────────────── -->
+    <!-- ─── TAB: Listings ────────────────────────────────────────── -->
     <div id="tab-listings" class="tab-content">
         <h3>🏠 Manage Listings</h3>
         <div class="data-form">
@@ -244,6 +244,10 @@
                 </select>
                 <input type="text" id="listingSource" placeholder="Source (e.g. MLS)" value="Manual" />
             </div>
+            <!-- NEW URL field -->
+            <div class="form-row">
+                <input type="text" id="listingUrl" placeholder="Listing URL (optional)" />
+            </div>
             <div class="form-row">
                 <textarea id="listingDescription" placeholder="Description" rows="2"></textarea>
             </div>
@@ -253,7 +257,7 @@
         <div id="listingTableContainer"><p>Loading...</p></div>
     </div>
 
-    <!-- ─── TAB: Stats ────────────────────────────────────────── -->
+    <!-- ─── TAB: Stats ────────────────────────────────────────────── -->
     <div id="tab-stats" class="tab-content">
         <h3>📊 Manage Market Stats</h3>
         <div class="data-form">
@@ -279,7 +283,7 @@
         <div id="statTableContainer"><p>Loading...</p></div>
     </div>
 
-    <!-- ─── TAB: News ────────────────────────────────────────── -->
+    <!-- ─── TAB: News ────────────────────────────────────────────── -->
     <div id="tab-news" class="tab-content">
         <h3>📰 Manage News Items</h3>
         <div class="data-form">
@@ -306,7 +310,7 @@
         <div id="newsTableContainer"><p>Loading...</p></div>
     </div>
 
-    <!-- ─── TAB: Events ────────────────────────────────────────── -->
+    <!-- ─── TAB: Events ────────────────────────────────────────────── -->
     <div id="tab-events" class="tab-content">
         <h3>📅 Manage Events</h3>
         <div class="data-form">
@@ -333,7 +337,7 @@
         <div id="eventTableContainer"><p>Loading...</p></div>
     </div>
 
-    <!-- ─── TAB: Trending Topics ────────────────────────────────── -->
+    <!-- ─── TAB: Trending Topics ────────────────────────────────────── -->
     <div id="tab-trending" class="tab-content">
         <h3>📈 Manage Trending Topics</h3>
         <div class="data-form">
@@ -351,7 +355,7 @@
         <div id="topicList"><p>Loading...</p></div>
     </div>
 
-    <!-- ─── TAB: Bots ────────────────────────────────────────────── -->
+    <!-- ─── TAB: Bots ────────────────────────────────────────────────── -->
     <div id="tab-bots" class="tab-content">
         <h3>🤖 Bot Control</h3>
         <p>Force any bot to post immediately.</p>
@@ -717,7 +721,6 @@
 
         // ─── CRUD functions with bulk selection ──────────────────────
 
-        // Store selected item IDs for the current table type
         let selectedIds = new Set();
 
         // Load table with checkboxes
@@ -725,7 +728,6 @@
             const containerId = type + 'TableContainer';
             const container = document.getElementById(containerId);
             container.innerHTML = '<p>Loading...</p>';
-            // Reset selection
             selectedIds.clear();
             try {
                 const res = await fetch(`/admin/data/${type}`);
@@ -735,7 +737,6 @@
                     container.innerHTML = '<p>No items found.</p>';
                     return;
                 }
-                // Build table with checkbox column
                 const first = data[0];
                 const keys = Object.keys(first).filter(k => !['_id', '__v', 'createdAt', 'updatedAt'].includes(k));
                 let html = `<div class="table-actions">
@@ -779,7 +780,6 @@
                 if (cb.checked) selectedIds.add(cb.dataset.id);
             });
             updateSelectedCount(type);
-            // Update "Select All" checkbox state
             const selectAll = document.getElementById(`selectAll_${type}`);
             if (selectAll) {
                 const allChecked = Array.from(checkboxes).every(cb => cb.checked);
@@ -821,7 +821,6 @@
                 return;
             }
             if (!confirm(`Delete ${ids.length} selected item(s) permanently?`)) return;
-            // Disable UI temporarily
             const btn = document.querySelector(`.table-actions .danger`);
             if (btn) btn.disabled = true;
             try {
@@ -871,6 +870,8 @@
                 else if (id.includes('Location')) data.location = el.value;
                 else if (id === 'eventType') data.type = el.value;
                 else if (id.includes('Date')) data.startDate = new Date(el.value);
+                // NEW: capture the URL field
+                else if (id === 'listingUrl') data.url = el.value;
             });
             if (!data.state) data.state = 'KY';
             if (!data.source) data.source = 'Manual';

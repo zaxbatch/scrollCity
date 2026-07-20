@@ -69,7 +69,7 @@ const TRENDING_TOPICS = [
   }
 ];
 
-// ─── Expanded Call‑to‑action pool (40 items) ────────────────
+// ─── Expanded Call‑to‑action pool ────────────────────────────────
 const CTAS = [
   // ----- Website links (clean URLs, no trailing punctuation) -----
   `🏠 Have questions? Visit my website at ${MAIN_URL} for all things real estate.`,
@@ -127,13 +127,38 @@ const trendingTemplates = [
   (topic) => `💡 ${topic.headline}. ${topic.detail} ${random(CTAS)} #Louisville`
 ];
 
-// ─── Listing Templates ────────────────────────────────────────
+// ─── UPDATED Listing Templates (with url support) ──────────────
 const listingTemplates = [
-  (listing) => `🏡 New listing alert! ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA at ${listing.address} for $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 80)}... ${random(CTAS)} #LouisvilleRealEstate`,
-  (listing) => `Just hit the market: ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA in ${listing.city || 'Louisville'} for $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 60)}... ${random(CTAS)} #KYHomes`,
-  (listing) => `🚀 Hot property! ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA on ${listing.address}. Priced at $${listing.price.toLocaleString()}. ${random(CTAS)} #LouisvilleRealEstate`,
-  (listing) => `🏠 ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA home in ${listing.city || 'Louisville'} – only $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 70)}... ${random(CTAS)}`,
-  (listing) => `✨ Just listed: ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA with ${listing.sqft || '?'} sqft. $${listing.price.toLocaleString()} – ${random(CTAS)}`
+  (listing) => {
+    let msg = `🏡 New listing alert! ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA at ${listing.address} for $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 80)}...`;
+    if (listing.url) msg += ` See the listing here: ${listing.url}`;
+    msg += ` ${random(CTAS)} #LouisvilleRealEstate`;
+    return msg;
+  },
+  (listing) => {
+    let msg = `Just hit the market: ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA in ${listing.city || 'Louisville'} for $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 60)}...`;
+    if (listing.url) msg += ` Check it out: ${listing.url}`;
+    msg += ` ${random(CTAS)} #KYHomes`;
+    return msg;
+  },
+  (listing) => {
+    let msg = `🚀 Hot property! ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA on ${listing.address}. Priced at $${listing.price.toLocaleString()}.`;
+    if (listing.url) msg += ` See the listing here: ${listing.url}`;
+    msg += ` ${random(CTAS)} #LouisvilleRealEstate`;
+    return msg;
+  },
+  (listing) => {
+    let msg = `🏠 ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA home in ${listing.city || 'Louisville'} – only $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 70)}...`;
+    if (listing.url) msg += ` View details: ${listing.url}`;
+    msg += ` ${random(CTAS)}`;
+    return msg;
+  },
+  (listing) => {
+    let msg = `✨ Just listed: ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA with ${listing.sqft || '?'} sqft. $${listing.price.toLocaleString()} – `;
+    if (listing.url) msg += ` More info: ${listing.url}`;
+    msg += ` ${random(CTAS)}`;
+    return msg;
+  }
 ];
 
 // ─── Stat Templates ───────────────────────────────────────────

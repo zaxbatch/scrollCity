@@ -13,8 +13,8 @@ const ListingSchema = new mongoose.Schema({
     type: String,
     enum: [
       'Residential',
-      'Single Family',      // added
-      'Condo/Townhouse',    // added
+      'Single Family',
+      'Condo/Townhouse',
       'Commercial',
       'Land',
       'Multi-Family'
@@ -28,6 +28,7 @@ const ListingSchema = new mongoose.Schema({
   },
   description: String,
   images: [String],
+  url: { type: String, default: '' },          // NEW field
   agent: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   source: { type: String, default: 'Manual' },
   featured: { type: Boolean, default: false },
