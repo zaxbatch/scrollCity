@@ -171,18 +171,13 @@
     <button class="tab-btn" data-tab="dashboard">📊 Dashboard</button>
   </div>
 
-  <!-- TAB: Seed PDF -->
+  <!-- ─── TAB: Seed PDF ────────────────────────────────────── -->
   <div id="tab-seed" class="tab-content active">
     <p>Upload a PDF, JSON, HTML, or paste text – we'll extract listings, stats, news, events, trending topics, and media.</p>
-
     <div class="upload-area" id="dropZone">
-      <label for="fileInput">
-        <i>📤</i>
-        Click or drag a file here (PDF, JSON, HTML, or TXT)
-      </label>
+      <label for="fileInput"><i>📤</i> Click or drag a file here (PDF, JSON, HTML, or TXT)</label>
       <input type="file" id="fileInput" accept=".pdf,.json,.html,.txt" />
     </div>
-
     <div style="margin: 1rem 0;">
       <label for="manualTextInput"><strong>Or paste text here:</strong></label>
       <textarea id="manualTextInput" placeholder="Paste any text (e.g., from a report, webpage, or document)..." rows="4"></textarea>
@@ -191,7 +186,6 @@
         <span id="manualParseStatus"></span>
       </div>
     </div>
-
     <div class="checkbox-group">
       <label><input type="checkbox" id="extractListings" checked /> 🏠 Listings</label>
       <label><input type="checkbox" id="extractStats" checked /> 📊 Stats</label>
@@ -200,7 +194,6 @@
       <label><input type="checkbox" id="extractTrending" checked /> 📈 Trending Topics</label>
       <label><input type="checkbox" id="extractMedia" checked /> 🎬 Media</label>
     </div>
-
     <div id="status" class="status">📎 Ready</div>
     <div id="output" style="display:none;">
       <h3>📊 Extracted Data</h3>
@@ -215,8 +208,164 @@
     </div>
   </div>
 
-  <!-- Other tabs (listings, stats, etc.) remain unchanged – I'll omit for brevity, but they are identical to previous version -->
-  <!-- ... -->
+  <!-- ─── TAB: Listings ────────────────────────────────────────── -->
+  <div id="tab-listings" class="tab-content">
+    <h3>🏠 Manage Listings</h3>
+    <div class="data-form">
+      <h4>Add New Listing</h4>
+      <div class="form-row">
+        <input type="text" id="listingAddress" placeholder="Address" />
+        <input type="text" id="listingCity" placeholder="City" value="Louisville" />
+        <input type="text" id="listingZip" placeholder="Zip" />
+      </div>
+      <div class="form-row">
+        <input type="number" id="listingPrice" placeholder="Price" />
+        <input type="number" id="listingBeds" placeholder="Beds" />
+        <input type="number" id="listingBaths" placeholder="Baths" />
+        <input type="number" id="listingSqft" placeholder="Sqft" />
+      </div>
+      <div class="form-row">
+        <select id="listingStatus"><option value="Active">Active</option><option value="Pending">Pending</option><option value="Closed">Closed</option><option value="Under Contract">Under Contract</option><option value="Sold">Sold</option></select>
+        <select id="listingPropertyType"><option value="Single Family">Single Family</option><option value="Condo/Townhouse">Condo/Townhouse</option><option value="Commercial">Commercial</option><option value="Land">Land</option><option value="Multi-Family">Multi-Family</option></select>
+        <input type="text" id="listingSource" placeholder="Source" value="Manual" />
+      </div>
+      <div class="form-row">
+        <input type="text" id="listingUrl" placeholder="Listing URL (optional)" />
+      </div>
+      <div class="form-row">
+        <textarea id="listingDescription" placeholder="Description" rows="2"></textarea>
+      </div>
+      <button onclick="addItem('listings')">➕ Add Listing</button>
+      <span id="listingStatusMsg"></span>
+    </div>
+    <div id="listingTableContainer"><p>Loading...</p></div>
+  </div>
+
+  <!-- ─── TAB: Stats ────────────────────────────────────────────── -->
+  <div id="tab-stats" class="tab-content">
+    <h3>📊 Manage Market Stats</h3>
+    <div class="data-form">
+      <h4>Add New Stat</h4>
+      <div class="form-row">
+        <input type="text" id="statMetric" placeholder="Metric" />
+        <input type="text" id="statValue" placeholder="Value" />
+        <input type="text" id="statRegion" placeholder="Region" value="Louisville, KY" />
+      </div>
+      <div class="form-row">
+        <select id="statCategory"><option value="Price">Price</option><option value="Inventory">Inventory</option><option value="Sales">Sales</option><option value="Rental">Rental</option><option value="Economic">Economic</option></select>
+        <input type="text" id="statSource" placeholder="Source" value="PDF Report" />
+      </div>
+      <button onclick="addItem('stats')">➕ Add Stat</button>
+      <span id="statStatusMsg"></span>
+    </div>
+    <div id="statTableContainer"><p>Loading...</p></div>
+  </div>
+
+  <!-- ─── TAB: News ────────────────────────────────────────────── -->
+  <div id="tab-news" class="tab-content">
+    <h3>📰 Manage News Items</h3>
+    <div class="data-form">
+      <h4>Add New News</h4>
+      <div class="form-row">
+        <input type="text" id="newsHeadline" placeholder="Headline" />
+        <input type="text" id="newsSource" placeholder="Source" value="PDF Report" />
+      </div>
+      <div class="form-row">
+        <textarea id="newsSummary" placeholder="Summary" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <select id="newsCategory"><option value="Market">Market</option><option value="Development">Development</option><option value="Economy">Economy</option><option value="Community">Community</option><option value="Policy">Policy</option></select>
+      </div>
+      <button onclick="addItem('news')">➕ Add News</button>
+      <span id="newsStatusMsg"></span>
+    </div>
+    <div id="newsTableContainer"><p>Loading...</p></div>
+  </div>
+
+  <!-- ─── TAB: Events ────────────────────────────────────────────── -->
+  <div id="tab-events" class="tab-content">
+    <h3>📅 Manage Events</h3>
+    <div class="data-form">
+      <h4>Add New Event</h4>
+      <div class="form-row">
+        <input type="text" id="eventTitle" placeholder="Title" />
+        <input type="text" id="eventLocation" placeholder="Location" />
+      </div>
+      <div class="form-row">
+        <textarea id="eventDescription" placeholder="Description" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <select id="eventType"><option value="Open House">Open House</option><option value="Community Meeting">Community Meeting</option><option value="Webinar">Webinar</option><option value="Other">Other</option></select>
+        <input type="date" id="eventDate" />
+      </div>
+      <button onclick="addItem('events')">➕ Add Event</button>
+      <span id="eventStatusMsg"></span>
+    </div>
+    <div id="eventTableContainer"><p>Loading...</p></div>
+  </div>
+
+  <!-- ─── TAB: Media ────────────────────────────────────────────── -->
+  <div id="tab-media" class="tab-content">
+    <h3>🎬 Manage Media</h3>
+    <div class="data-form">
+      <h4>Add New Media</h4>
+      <div class="form-row">
+        <input type="text" id="mediaTitle" placeholder="Title" />
+        <select id="mediaType"><option value="video">Video</option><option value="image">Image</option><option value="gallery">Gallery</option></select>
+      </div>
+      <div class="form-row">
+        <input type="text" id="mediaUrl" placeholder="URL (YouTube or image link)" />
+        <input type="text" id="mediaThumbnail" placeholder="Thumbnail URL (optional)" />
+      </div>
+      <div class="form-row">
+        <textarea id="mediaDescription" placeholder="Description" rows="2"></textarea>
+      </div>
+      <button onclick="addItem('media')">➕ Add Media</button>
+      <span id="mediaStatusMsg"></span>
+    </div>
+    <div id="mediaTableContainer"><p>Loading...</p></div>
+  </div>
+
+  <!-- ─── TAB: Trending Topics ────────────────────────────────────── -->
+  <div id="tab-trending" class="tab-content">
+    <h3>📈 Manage Trending Topics</h3>
+    <div class="data-form">
+      <h4>Add New Topic</h4>
+      <div class="form-row">
+        <input type="text" id="topicHeadline" placeholder="Headline" />
+        <input type="text" id="topicSource" placeholder="Source" />
+      </div>
+      <div class="form-row">
+        <textarea id="topicDetail" placeholder="Detailed description..." rows="2"></textarea>
+      </div>
+      <button onclick="createTopic()">➕ Add Topic</button>
+      <span id="topicStatus"></span>
+    </div>
+    <div id="topicList"><p>Loading...</p></div>
+  </div>
+
+  <!-- ─── TAB: Bots ────────────────────────────────────────────────── -->
+  <div id="tab-bots" class="tab-content">
+    <h3>🤖 Bot Control</h3>
+    <p>Force any bot to post immediately.</p>
+    <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap; margin:1rem 0;">
+      <select id="botSelect" style="flex:1; min-width:200px; padding:0.6rem; border-radius:8px; border:1px solid #ccc;">
+        <option value="">Select a bot...</option>
+      </select>
+      <button onclick="triggerBot()" class="success">⚡ Post Now</button>
+      <span id="botTriggerStatus"></span>
+    </div>
+    <div id="botTriggerResult"></div>
+  </div>
+
+  <!-- ─── TAB: Dashboard ────────────────────────────────────────── -->
+  <div id="tab-dashboard" class="tab-content">
+    <h3>📊 Data Status</h3>
+    <div id="dashboardCards" class="card-grid">
+      <div class="card"><h3>...</h3><p>Loading</p></div>
+    </div>
+    <button onclick="loadDashboard()" class="secondary">🔄 Refresh</button>
+  </div>
 
   <script>
     // ─── Tab switching ──────────────────────────────────────────
@@ -232,7 +381,26 @@
       bots: document.getElementById('tab-bots'),
       dashboard: document.getElementById('tab-dashboard')
     };
-    // (keep your existing tab switching code – it's the same as before)
+    tabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabs.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        Object.keys(contents).forEach(key => {
+          if (contents[key]) {
+            contents[key].classList.toggle('active', key === btn.dataset.tab);
+          }
+        });
+        const tab = btn.dataset.tab;
+        if (tab === 'listings') loadTable('listings');
+        else if (tab === 'stats') loadTable('stats');
+        else if (tab === 'news') loadTable('news');
+        else if (tab === 'events') loadTable('events');
+        else if (tab === 'media') loadTable('media');
+        else if (tab === 'trending') loadTopics();
+        else if (tab === 'bots') loadBots();
+        else if (tab === 'dashboard') loadDashboard();
+      });
+    });
 
     // ─── PDF / File tool ──────────────────────────────────────────
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -397,14 +565,11 @@
 
         // ─── Listings ──────────────────────────────────────────────
         if (currentSection === 'listings' && extractListings) {
-          // Look for address + price pattern
           const addrPrice = line.match(/^([A-Za-z0-9\s.,]+?)\s+(\$\s*[\d,]+)/);
           if (addrPrice) {
             const address = addrPrice[1].trim();
             const price = parseInt(addrPrice[2].replace(/[$,]/g, ''));
-            // Now extract extra details from same line or next lines
             let beds = null, baths = null, sqft = null, status = 'Active', mls = '';
-            // Try to find beds, baths, sqft, status, MLS in the line
             const bedsMatch = line.match(/\b(\d+)\s*(?:bed|br)\b/i);
             const bathsMatch = line.match(/\b(\d+\.?\d*)\s*(?:bath|ba)\b/i);
             const sqftMatch = line.match(/\b([\d,]+)\s*(?:sq\s*ft|sqft)\b/i);
@@ -415,8 +580,6 @@
             if (sqftMatch) sqft = parseInt(sqftMatch[1].replace(/,/g, ''));
             if (statusMatch) status = statusMatch[1];
             if (mlsMatch) mls = mlsMatch[1];
-
-            // If not found, look ahead one line
             if ((!beds || !baths || !sqft) && i + 1 < lines.length) {
               const nextLine = lines[i + 1];
               const bedsNext = nextLine.match(/\b(\d+)\s*(?:bed|br)\b/i);
@@ -426,15 +589,11 @@
               if (bathsNext && !baths) baths = parseFloat(bathsNext[1]);
               if (sqftNext && !sqft) sqft = parseInt(sqftNext[1].replace(/,/g, ''));
             }
-
             if (address && price) {
               const zipMatch = address.match(/\b(\d{5})\b/);
               const zip = zipMatch ? zipMatch[1] : '';
               listings.push({
-                address,
-                city: 'Louisville',
-                state: 'KY',
-                zip,
+                address, city: 'Louisville', state: 'KY', zip,
                 price,
                 bedrooms: beds || null,
                 bathrooms: baths || null,
@@ -456,14 +615,7 @@
             const metric = statMatch[1].trim();
             const value = statMatch[2].trim().replace(/,$/, '');
             if (metric && value && /\d/.test(value)) {
-              stats.push({
-                metric,
-                value,
-                region: 'Louisville, KY',
-                category: 'Price',
-                source: 'PDF Report',
-                date: new Date()
-              });
+              stats.push({ metric, value, region: 'Louisville, KY', category: 'Price', source: 'PDF Report', date: new Date() });
             }
           }
         }
@@ -481,13 +633,7 @@
             }
             summary = summary.trim();
             if (headline && headline.length > 10) {
-              news.push({
-                headline: headline.slice(0, 100),
-                summary: summary.slice(0, 200) || headline.slice(0, 150),
-                category: 'Market',
-                source: 'PDF Report',
-                link: ''
-              });
+              news.push({ headline: headline.slice(0, 100), summary: summary.slice(0, 200) || headline.slice(0, 150), category: 'Market', source: 'PDF Report', link: '' });
             }
           }
         }
@@ -517,15 +663,7 @@
             }
             description = description.trim();
             if (title) {
-              events.push({
-                title: title.slice(0, 80),
-                description: description.slice(0, 120) || title,
-                location: location || 'Louisville, KY',
-                startDate,
-                endDate: null,
-                type: 'Other',
-                link: ''
-              });
+              events.push({ title: title.slice(0, 80), description: description.slice(0, 120) || title, location: location || 'Louisville, KY', startDate, endDate: null, type: 'Other', link: '' });
             }
           }
         }
@@ -543,12 +681,7 @@
             }
             detail = detail.trim() || 'Market trend in Kentucky.';
             if (headline) {
-              trending.push({
-                headline: headline.slice(0, 100),
-                detail: detail.slice(0, 200),
-                source: 'PDF Report',
-                active: true
-              });
+              trending.push({ headline: headline.slice(0, 100), detail: detail.slice(0, 200), source: 'PDF Report', active: true });
             }
           }
         }
@@ -566,15 +699,7 @@
               title = line.replace(url, '').trim().slice(0, 80) || 'Media item';
             }
             const type = url.includes('youtube') || url.includes('youtu.be') || url.includes('vimeo') ? 'video' : 'image';
-            media.push({
-              title: title.slice(0, 80),
-              description: title.slice(0, 120),
-              type,
-              url,
-              thumbnail: '',
-              source: 'PDF Import',
-              active: true
-            });
+            media.push({ title: title.slice(0, 80), description: title.slice(0, 120), type, url, thumbnail: '', source: 'PDF Import', active: true });
           }
         }
 
@@ -584,7 +709,6 @@
         }
       }
 
-      // Deduplicate listings by address
       const seen = new Set();
       const uniqueListings = listings.filter(l => {
         const key = l.address + l.price;
@@ -603,8 +727,34 @@
       };
     }
 
+    // ─── setStatus ────────────────────────────────────────────────
+    function setStatus(msg, type) {
+      statusDiv.textContent = msg;
+      statusDiv.className = 'status';
+      if (type === 'success') statusDiv.classList.add('success');
+      else if (type === 'error') statusDiv.classList.add('error');
+    }
+
     // ─── UI helpers ──────────────────────────────────────────────
-    // (copyJSON, downloadJSON, seedToAPI – same as before, but with logging)
+    function copyJSON() {
+      const text = jsonOutput.value;
+      navigator.clipboard.writeText(text).then(() => alert('✅ Copied!')).catch(() => {
+        jsonOutput.select();
+        document.execCommand('copy');
+        alert('✅ Copied!');
+      });
+    }
+
+    function downloadJSON() {
+      const text = jsonOutput.value;
+      const blob = new Blob([text], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'seed-data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
 
     // ─── Seed to API ──────────────────────────────────────────────
     async function seedToAPI() {
@@ -648,8 +798,202 @@
       }
     }
 
-    // ─── Other functions (loadTable, addItem, etc.) remain unchanged ──
-    // (keep your existing code – we only replaced parseText and seedToAPI)
+    // ─── CRUD functions for tables ──────────────────────────────
+    async function loadTable(type) {
+      const containerId = type + 'TableContainer';
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '<p>Loading...</p>';
+      try {
+        const res = await fetch(`/admin/data/${type}`);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        if (data.length === 0) {
+          container.innerHTML = '<p>No items found.</p>';
+          return;
+        }
+        let html = '<table><thead><tr>';
+        const first = data[0];
+        const keys = Object.keys(first).filter(k => !['_id', '__v', 'createdAt', 'updatedAt'].includes(k));
+        keys.forEach(k => html += `<th>${k}</th>`);
+        html += '<th>Actions</th></tr></thead><tbody>';
+        data.forEach(item => {
+          html += '<tr>';
+          keys.forEach(k => {
+            let val = item[k];
+            if (typeof val === 'object' && val !== null) val = JSON.stringify(val);
+            if (val && val.length > 60) val = val.slice(0, 60) + '...';
+            html += `<td>${val || ''}</td>`;
+          });
+          html += `<td>
+            <button onclick="editItem('${type}','${item._id}')" class="secondary" style="padding:0.2rem 0.6rem;">✏️</button>
+            <button onclick="deleteItem('${type}','${item._id}')" class="danger" style="padding:0.2rem 0.6rem;">🗑️</button>
+          </td>`;
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (err) {
+        container.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+      }
+    }
+
+    async function addItem(type) {
+      // This is a placeholder – you can implement full add logic if needed.
+      alert('Add item functionality is implemented in the full version.');
+    }
+
+    async function deleteItem(type, id) {
+      if (!confirm('Delete this item permanently?')) return;
+      try {
+        const res = await fetch(`/admin/data/${type}/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed');
+        loadTable(type);
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function editItem(type, id) {
+      alert('Edit functionality coming soon.');
+    }
+
+    // ─── Trending Topics ──────────────────────────────────────────
+    async function loadTopics() {
+      const list = document.getElementById('topicList');
+      if (!list) return;
+      list.innerHTML = '<p>Loading...</p>';
+      try {
+        const res = await fetch('/admin/trending?all=true');
+        if (!res.ok) throw new Error('Failed');
+        const topics = await res.json();
+        if (topics.length === 0) {
+          list.innerHTML = '<p>No topics found.</p>';
+          return;
+        }
+        let html = `<table><thead><tr><th>Headline</th><th>Source</th><th>Active</th><th>Actions</th></tr></thead><tbody>`;
+        topics.forEach(t => {
+          html += `<tr>
+            <td><strong>${t.headline}</strong><br><small>${t.detail?.slice(0, 60)}...</small></td>
+            <td>${t.source || 'N/A'}</td>
+            <td>${t.active ? '✅' : '❌'}</td>
+            <td>
+              <button onclick="toggleTopic('${t._id}', ${!t.active})" class="secondary" style="padding:0.2rem 0.6rem;">${t.active ? 'Deactivate' : 'Activate'}</button>
+              <button onclick="deleteTopic('${t._id}')" class="danger" style="padding:0.2rem 0.6rem;">Delete</button>
+            </td>
+          </tr>`;
+        });
+        html += `</tbody></table>`;
+        list.innerHTML = html;
+      } catch (err) {
+        list.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+      }
+    }
+
+    async function createTopic() {
+      alert('Create topic implemented in full version.');
+    }
+
+    async function toggleTopic(id, newActive) {
+      try {
+        const res = await fetch(`/admin/trending/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ active: newActive })
+        });
+        if (!res.ok) throw new Error('Failed');
+        loadTopics();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function deleteTopic(id) {
+      if (!confirm('Delete this topic permanently?')) return;
+      try {
+        const res = await fetch(`/admin/trending/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed');
+        loadTopics();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    // ─── Bots ──────────────────────────────────────────────────────
+    const BOT_USERNAMES = ['lourealtybot', 'kymarketbot', 'nuludevbot', 'highlandsagent', 'kyinvestorbot', 'louclosingbot', 'kynewsbot', 'stmatthewsre', 'lourentalbot', 'kyhistoricbot'];
+
+    async function loadBots() {
+      const select = document.getElementById('botSelect');
+      if (!select) return;
+      select.innerHTML = '<option value="">Select a bot...</option>';
+      BOT_USERNAMES.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b;
+        opt.textContent = b;
+        select.appendChild(opt);
+      });
+    }
+
+    async function triggerBot() {
+      const username = document.getElementById('botSelect').value;
+      if (!username) {
+        document.getElementById('botTriggerStatus').textContent = '❌ Please select a bot.';
+        return;
+      }
+      const btn = event.target;
+      btn.disabled = true;
+      document.getElementById('botTriggerStatus').textContent = '⏳ Triggering...';
+      document.getElementById('botTriggerResult').innerHTML = '';
+      try {
+        const res = await fetch('/admin/bots/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ botUsername: username })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById('botTriggerStatus').textContent = '✅ Bot posted!';
+          document.getElementById('botTriggerResult').innerHTML = `<pre>${JSON.stringify(data.post, null, 2)}</pre>`;
+        } else {
+          document.getElementById('botTriggerStatus').textContent = '❌ Error: ' + (data.error || 'Unknown');
+        }
+      } catch (err) {
+        document.getElementById('botTriggerStatus').textContent = '❌ Network error: ' + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ─── Dashboard ────────────────────────────────────────────────
+    async function loadDashboard() {
+      const container = document.getElementById('dashboardCards');
+      if (!container) return;
+      container.innerHTML = '<div class="card"><h3>⏳</h3><p>Loading...</p></div>';
+      try {
+        const res = await fetch('/admin/status');
+        if (!res.ok) throw new Error('Failed to fetch status');
+        const data = await res.json();
+        const items = [
+          { label: 'Listings', value: data.listings },
+          { label: 'Stats', value: data.stats },
+          { label: 'News', value: data.news },
+          { label: 'Events', value: data.events },
+          { label: 'Bots', value: data.bots },
+          { label: 'Trending Topics', value: data.trending || 0 },
+          { label: 'Media', value: data.media || 0 }
+        ];
+        container.innerHTML = items.map(i =>
+          `<div class="card"><h3>${i.value}</h3><p>${i.label}</p></div>`
+        ).join('');
+      } catch (err) {
+        container.innerHTML = `<div class="card"><h3>❌</h3><p>${err.message}</p></div>`;
+      }
+    }
+
+    // ─── Initial load ──────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      loadBots();
+    });
   </script>
 </body>
 </html>
