@@ -48,7 +48,7 @@ const proxyToAdmin = async (req, res, endpoint, method = 'GET', body = null) => 
 
 // ─── Seed endpoint ──────────────────────────────────────────
 app.post('/seed', async (req, res) => {
-  const { listings, stats, news, events } = req.body;
+  const { listings, stats, news, events, media } = req.body;
   const adminSecret = process.env.ADMIN_SECRET;
   const baseUrl = process.env.API_BASE_URL || 'https://scroll-city.onrender.com/api/admin';
 
@@ -81,6 +81,7 @@ app.post('/seed', async (req, res) => {
     results.stats = await sendBatch('/data/stats', stats);
     results.news = await sendBatch('/data/news', news);
     results.events = await sendBatch('/data/events', events);
+    results.media = await sendBatch('/data/media', media); // <-- NEW
 
     res.json({ success: true, results });
   } catch (error) {
@@ -125,6 +126,9 @@ app.get('/admin/data/:type', async (req, res) => {
 });
 app.get('/admin/data/:type/:id', async (req, res) => {
   await proxyToAdmin(req, res, `/data/${req.params.type}/${req.params.id}`);
+});
+app.post('/admin/data/:type', async (req, res) => { // <-- NEW (for adding single items)
+  await proxyToAdmin(req, res, `/data/${req.params.type}`, 'POST', req.body);
 });
 app.put('/admin/data/:type/:id', async (req, res) => {
   await proxyToAdmin(req, res, `/data/${req.params.type}/${req.params.id}`, 'PUT', req.body);

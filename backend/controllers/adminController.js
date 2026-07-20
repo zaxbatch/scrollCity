@@ -6,6 +6,7 @@ const BotPersona = require('../models/BotPersona');
 const User = require('../models/User');
 const Post = require('../models/Post');
 const TrendingTopic = require('../models/TrendingTopic');
+const MediaItem = require('../models/MediaItem'); // <-- NEW
 
 // ─── Helper to get model by type ─────────────────────────────
 function getModel(type) {
@@ -14,6 +15,7 @@ function getModel(type) {
     case 'stats': return MarketStat;
     case 'news': return NewsItem;
     case 'events': return Event;
+    case 'media': return MediaItem; // <-- NEW
     default: throw new Error('Invalid type');
   }
 }
@@ -66,6 +68,20 @@ exports.uploadEvents = async (req, res) => {
   }
 };
 
+// ─── NEW: Upload media ──────────────────────────────────────────
+exports.uploadMedia = async (req, res) => {
+  try {
+    const media = req.body;
+    if (!Array.isArray(media)) {
+      return res.status(400).json({ error: 'Expected array of media items' });
+    }
+    const inserted = await MediaItem.insertMany(media);
+    res.json({ message: `Inserted ${inserted.length} media items` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // ─── Trigger bot post ─────────────────────────────────────────
 
 exports.triggerBotPost = async (req, res) => {
@@ -90,7 +106,8 @@ exports.getDataStatus = async (req, res) => {
     const events = await Event.countDocuments();
     const bots = await BotPersona.countDocuments();
     const trending = await TrendingTopic.countDocuments();
-    res.json({ listings, stats, news, events, bots, trending });
+    const media = await MediaItem.countDocuments(); // <-- NEW
+    res.json({ listings, stats, news, events, bots, trending, media });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
