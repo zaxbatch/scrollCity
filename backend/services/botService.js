@@ -11,6 +11,17 @@ const MediaItem = require('../models/MediaItem'); // <-- NEW
 // ─── Helper: random item from array ──────────────────────────
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+// ─── Helper: weighted random selection ────────────────────────
+const weightedRandom = (items) => {
+  const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+  let rand = Math.random() * totalWeight;
+  for (const item of items) {
+    rand -= item.weight;
+    if (rand <= 0) return item.value;
+  }
+  return items[0].value;
+};
+
 // ─── Helper: safe URL formatting ──────────────────────────────
 const formatListingUrl = (listing) => {
   if (listing.url && listing.url.trim()) {
@@ -24,6 +35,8 @@ const MAIN_URL = 'https://zerric.com';
 const MORTGAGE_URL = 'https://zerric.com/mortgage-calculator';
 const GUESTBOOK_URL = 'https://zerric.com/guest-book';
 const SEARCH_URL = 'https://zerric.com/property-search';
+const BLOG_URL = 'https://zerric.com/blog';
+const CONTACT_URL = 'https://zerric.com/contact';
 
 // ─── Fallback trending topics (if DB is empty) ────────────────
 const FALLBACK_TOPICS = [
@@ -56,134 +69,321 @@ async function getTrendingTopicsFromDB() {
   }
 }
 
-// ─── CTAs (no periods after URLs) ─────────────────────────────
-const CTAS = [
-  // ----- Website plugs (no period after URL) -----
-  `🏠 Have questions? Visit my website at ${MAIN_URL} for all things real estate`,
-  `📞 Thinking of buying or selling? Zerric can help – start at ${MAIN_URL}`,
-  `📧 Want a free home valuation? Zerric offers them at ${MAIN_URL}`,
-  `🔍 See a home you like? Reach out to Zerric via ${MAIN_URL}`,
-  `📈 Not sure if now is the right time? Zerric can walk you through it – ${MAIN_URL}`,
-  `🏡 Ready to make a move? Zerric is ready to help – start at ${MAIN_URL}`,
-  `📱 Thinking of selling? Zerric can help you get top dollar – ${MAIN_URL}`,
-  `📐 Calculate your mortgage payments easily with Zerric's mortgage calculator: ${MORTGAGE_URL}`,
-  `📝 Sign Zerric's guest book and share your thoughts: ${GUESTBOOK_URL}`,
-  `🔎 Find your dream home with Zerric's property search tool: ${SEARCH_URL}`,
-  `💬 Zerric is always available to chat – just click the chat icon on his site (lower right) at ${MAIN_URL}`,
-  `🤝 Looking for a trusted Realtor? Zerric is right here at ${MAIN_URL} – let's connect`,
-  `📲 You can talk to Zerric directly via the chat widget on his site: ${MAIN_URL} (look for the icon at the bottom right)`,
-  `🏘️ Explore all of Zerric's listings and resources at ${MAIN_URL}`,
-  `📞 Zerric is just a call or click away – visit ${MAIN_URL} to get started`,
+// ─── Advanced CTAs (categorized, no periods after URLs) ──────
+const CTAS_CATEGORIES = {
+  website: [
+    `🏠 Have questions? Visit my website at ${MAIN_URL} for all things real estate`,
+    `📞 Thinking of buying or selling? Zerric can help – start at ${MAIN_URL}`,
+    `📧 Want a free home valuation? Zerric offers them at ${MAIN_URL}`,
+    `🔍 See a home you like? Reach out to Zerric via ${MAIN_URL}`,
+    `📈 Not sure if now is the right time? Zerric can walk you through it – ${MAIN_URL}`,
+    `🏡 Ready to make a move? Zerric is ready to help – start at ${MAIN_URL}`,
+    `📱 Thinking of selling? Zerric can help you get top dollar – ${MAIN_URL}`,
+    `📐 Calculate your mortgage payments easily with Zerric's mortgage calculator: ${MORTGAGE_URL}`,
+    `📝 Sign Zerric's guest book and share your thoughts: ${GUESTBOOK_URL}`,
+    `🔎 Find your dream home with Zerric's property search tool: ${SEARCH_URL}`,
+    `💬 Zerric is always available to chat – just click the chat icon on his site (lower right) at ${MAIN_URL}`,
+    `🤝 Looking for a trusted Realtor? Zerric is right here at ${MAIN_URL} – let's connect`,
+    `📲 You can talk to Zerric directly via the chat widget on his site: ${MAIN_URL} (look for the icon at the bottom right)`,
+    `🏘️ Explore all of Zerric's listings and resources at ${MAIN_URL}`,
+    `📞 Zerric is just a call or click away – visit ${MAIN_URL} to get started`,
+    `📖 Read more insights on Zerric's blog: ${BLOG_URL}`,
+    `✉️ Have a specific question? Contact Zerric directly: ${CONTACT_URL}`
+  ],
+  referral: [
+    `💬 Have questions about today's market? Zerric has the answers – just reach out`,
+    `📞 Zerric is available to chat about your real estate goals – contact him anytime`,
+    `🤔 Wondering what this means for you? Zerric can explain in plain language`,
+    `🏘️ Looking for the perfect neighborhood? Zerric knows Louisville inside out`,
+    `📊 Want more insights like this? Zerric would love to connect with you`,
+    `⭐ Zerric is here to help you navigate the Louisville market with confidence`,
+    `📲 Zerric offers free, no‑pressure consultations – reach out to learn more`,
+    `🏠 I know a Realtor who can help – and it's Zerric 😉`,
+    `🗣️ Zerric speaks real estate – and he speaks Louisville`,
+    `🤝 Zerric treats every client like family – reach out to him`,
+    `💎 Zerric's knowledge of Louisville is unmatched – just ask him`,
+    `🎯 Looking for honest advice? Zerric is your guy`
+  ],
+  engagement: [
+    `💬 What do you think about today's market? Drop a comment below – I'd love to hear`,
+    `🗣️ Follow me for more local insights and updates`,
+    `📢 Let me know what you think – your feedback helps me serve you better`,
+    `⭐ If you found this useful, please share it with a friend`,
+    `📲 Have a question? I'm just a message away`,
+    `👍 Like this post? Hit the like button and let me know`,
+    `🌟 Thinking of making a move? I'm here to guide you every step of the way`,
+    `📊 Want more data like this? Follow me for regular market snapshots`,
+    `💬 Let's start a conversation – what's your biggest real estate question`,
+    `📢 I'd love your opinion: what neighborhood should I cover next`,
+    `👋 Thanks for being part of this community – your support means a lot`,
+    `✨ If you're curious about your home's value, I can help you find out`,
+    `📲 Have you signed my guest book yet? I'd love to hear your story`,
+    `🌟 I'm here to make your real estate journey smooth and successful`,
+    `💬 What's your favorite Louisville neighborhood? Let me know in the comments`,
+    `📢 Tag someone who needs to see this`,
+    `🔔 Follow me to stay up‑to‑date on all things real estate in Kentucky`,
+    `🏘️ I'm passionate about helping families find their perfect home – let's chat`,
+    `💬 I'm just a click away – let's talk about your real estate goals`,
+    `🎯 Let me know what you'd like to see more of in this community`,
+    `📲 I'm always active – drop me a comment and I'll reply fast`,
+    `💭 Your thoughts matter – what's on your mind about the market?`
+  ],
+  questions: [
+    `❓ Are you ready to make a move in Louisville? Zerric can help`,
+    `🤔 Wondering if now is the time to buy? Zerric has insights`,
+    `💭 Thinking about selling? Let's talk strategy – Zerric knows the market`,
+    `❓ What's your home worth in today's market? Zerric can tell you`,
+    `💡 Looking for investment opportunities? Zerric knows where to look`,
+    `❓ First-time homebuyer? Zerric makes the process easy`,
+    `🧐 Curious about new developments in Louisville? Zerric stays informed`,
+    `❓ Ready to upgrade? Let's find your next home together`,
+    `💭 Considering downsizing? Zerric can guide you through it`,
+    `❓ Wondering about market trends? Zerric tracks them daily`
+  ]
+};
 
-  // ----- Referral to Zerric (without website link) -----
-  `💬 Have questions about today's market? Zerric has the answers – just reach out`,
-  `📞 Zerric is available to chat about your real estate goals – contact him anytime`,
-  `🤔 Wondering what this means for you? Zerric can explain in plain language`,
-  `🏘️ Looking for the perfect neighborhood? Zerric knows Louisville inside out`,
-  `📊 Want more insights like this? Zerric would love to connect with you`,
-  `⭐ Zerric is here to help you navigate the Louisville market with confidence`,
-  `📲 Zerric offers free, no‑pressure consultations – reach out to learn more`,
-  `🏠 I know a Realtor who can help – and it's Zerric 😉`,
+// Combine all CTAs for fallback
+const ALL_CTAS = Object.values(CTAS_CATEGORIES).flat();
 
-  // ----- Engagement prompts (comments, follows, feedback) -----
-  `💬 What do you think about today's market? Drop a comment below – I'd love to hear`,
-  `🗣️ Follow me for more local insights and updates`,
-  `📢 Let me know what you think – your feedback helps me serve you better`,
-  `⭐ If you found this useful, please share it with a friend`,
-  `📲 Have a question? I'm just a message away`,
-  `👍 Like this post? Hit the like button and let me know`,
-  `🌟 Thinking of making a move? I'm here to guide you every step of the way`,
-  `📊 Want more data like this? Follow me for regular market snapshots`,
-  `💬 Let's start a conversation – what's your biggest real estate question`,
-  `📢 I'd love your opinion: what neighborhood should I cover next`,
-  `👋 Thanks for being part of this community – your support means a lot`,
-  `✨ If you're curious about your home's value, I can help you find out`,
-  `📲 Have you signed my guest book yet? I'd love to hear your story`,
-  `🌟 I'm here to make your real estate journey smooth and successful`,
-  `💬 What's your favorite Louisville neighborhood? Let me know in the comments`,
-  `📢 Tag someone who needs to see this`,
-  `🔔 Follow me to stay up‑to‑date on all things real estate in Kentucky`,
-  `🏘️ I'm passionate about helping families find their perfect home – let's chat`,
-  `💬 I'm just a click away – let's talk about your real estate goals`,
-  `🎯 Let me know what you'd like to see more of in this community`,
-  `📲 I'm always active – drop me a comment and I'll reply fast`
-];
+// ─── Niche‑specific CTA preference ─────────────────────────────
+const NICHE_CTAS = {
+  'Finance': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.questions],
+  'Market Data': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.engagement],
+  'Construction': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.engagement],
+  'Neighborhood': [...CTAS_CATEGORIES.engagement, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.questions],
+  'Investment': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.questions],
+  'Media': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.engagement, ...CTAS_CATEGORIES.questions],
+  'General': ALL_CTAS
+};
 
-// ─── Trending Topic Templates ──────────────────────────────────
+// ─── Enhanced Trending Topic Templates ──────────────────────────
 const trendingTemplates = [
-  (topic) => `📊 ${topic.headline}. ${topic.detail} ${random(CTAS)} #LouisvilleRealEstate`,
-  (topic) => `🔍 Market update: ${topic.headline}. ${topic.detail} ${random(CTAS)} #KYHomes`,
-  (topic) => `📈 Did you catch this? ${topic.headline}. ${topic.detail} ${random(CTAS)}`,
-  (topic) => `🏙️ Louisville market news: ${topic.headline}. ${topic.detail} ${random(CTAS)}`,
-  (topic) => `💡 ${topic.headline}. ${topic.detail} ${random(CTAS)} #Louisville`
+  (topic) => {
+    const openings = [`📊 Market update:`, `🔍 Breaking news:`, `📈 Important shift:`, `🏙️ Louisville alert:`, `💡 Did you catch this?`];
+    return `${random(openings)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} #LouisvilleRealEstate`;
+  },
+  (topic) => {
+    const intros = [`Here's what's happening:`, `Let me share key data:`, `Every buyer should know:`, `Important for homeowners:`, `The market is shifting:`];
+    return `${random(intros)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} #KYHomes`;
+  },
+  (topic) => {
+    const personal = [`As your local Realtor:`, `Speaking from experience:`, `I've been watching this:`, `From my perspective:`, `Here's what I'm seeing:`];
+    return `${random(personal)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} #LouisvilleLiving`;
+  },
+  (topic) => {
+    const questions = [`What does this mean for you?`, `How does this affect your home?`, `Is this good for buyers or sellers?`, `Thinking about moving?`, `Curious about your home's value?`];
+    return `${random(questions)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} #LouisvilleMarket`;
+  },
+  (topic) => {
+    const calls = [`Let's break this down:`, `Want to understand this?`, `Ready to make a smart move?`, `Need expert guidance?`, `Let me help you navigate:`];
+    return `${random(calls)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} #ZerricRealty`;
+  }
 ];
 
-// ─── Listing Templates ─────────────────────────────────────────
+// ─── Enhanced Listing Templates ─────────────────────────────────
 const listingTemplates = [
   (listing) => {
-    let msg = `🏡 New listing alert! ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA at ${listing.address} for $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 80)}...`;
+    const intros = [`🏡 Exciting new listing alert!`, `🔑 Just hit the market!`, `✨ Beautiful new listing!`, `🎯 Check out this gem!`, `🌟 Fresh listing in Louisville!`];
+    let msg = `${random(intros)} ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA at ${listing.address} for $${listing.price.toLocaleString()}`;
+    if (listing.description) {
+      const desc = listing.description.slice(0, 100);
+      msg += ` – ${desc}${desc.length >= 100 ? '...' : ''}`;
+    }
     msg += formatListingUrl(listing);
-    msg += ` ${random(CTAS)} #LouisvilleRealEstate`;
+    msg += ` ${random(ALL_CTAS)} #LouisvilleRealEstate`;
     return msg;
   },
   (listing) => {
-    let msg = `Just hit the market: ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA in ${listing.city || 'Louisville'} for $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 60)}...`;
+    const features = [`with a spacious layout`, `with amazing natural light`, `with updated kitchen and baths`, `with a beautiful backyard`, `with fantastic curb appeal`];
+    let msg = `🏠 ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA in ${listing.city || 'Louisville'} ${random(features)} – $${listing.price.toLocaleString()}`;
+    if (listing.sqft) msg += `, ${listing.sqft} sqft`;
     msg += formatListingUrl(listing);
-    msg += ` ${random(CTAS)} #KYHomes`;
+    msg += ` ${random(ALL_CTAS)} #KYHomes`;
     return msg;
   },
   (listing) => {
-    let msg = `🚀 Hot property! ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA on ${listing.address}. Priced at $${listing.price.toLocaleString()}.`;
+    const highlights = [`This one has it all –`, `You won't want to miss –`, `This property is a must-see –`, `This home is move-in ready –`, `Check out these features –`];
+    let msg = `🚀 Hot property! ${random(highlights)} ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA on ${listing.address}`;
+    if (listing.sqft) msg += `, ${listing.sqft} sqft`;
+    msg += ` at $${listing.price.toLocaleString()}`;
     msg += formatListingUrl(listing);
-    msg += ` ${random(CTAS)} #LouisvilleRealEstate`;
+    msg += ` ${random(ALL_CTAS)} #LouisvilleRealEstate`;
     return msg;
   },
   (listing) => {
-    let msg = `🏠 ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA home in ${listing.city || 'Louisville'} – only $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 70)}...`;
+    const priceComments = [`at an incredible price`, `with great value`, `priced to sell`, `at a fantastic price point`, `with excellent investment potential`];
+    let msg = `🏠 ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA home in ${listing.city || 'Louisville'} ${random(priceComments)} $${listing.price.toLocaleString()}`;
+    if (listing.description) {
+      const desc = listing.description.slice(0, 80);
+      msg += ` – ${desc}${desc.length >= 80 ? '...' : ''}`;
+    }
     msg += formatListingUrl(listing);
-    msg += ` ${random(CTAS)}`;
+    msg += ` ${random(ALL_CTAS)}`;
     return msg;
   },
   (listing) => {
-    let msg = `✨ Just listed: ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA with ${listing.sqft || '?'} sqft. $${listing.price.toLocaleString()} – `;
+    const dreamTerms = [`Your dream home awaits`, `The perfect family home`, `A true Louisville treasure`, `An absolute charmer`, `A stunning property`];
+    let msg = `✨ ${random(dreamTerms)} – ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA`;
+    if (listing.sqft) msg += ` with ${listing.sqft} sqft`;
+    msg += ` for $${listing.price.toLocaleString()}`;
     msg += formatListingUrl(listing);
-    msg += ` ${random(CTAS)}`;
+    msg += ` ${random(ALL_CTAS)} #LouisvilleLiving`;
+    return msg;
+  },
+  (listing) => {
+    const neighborhoodIntros = [`Located in desirable`, `Situated in the heart of`, `Beautiful home in`, `Prime location in`, `This home is in`];
+    const area = listing.neighborhood || listing.city || 'Louisville';
+    let msg = `${random(neighborhoodIntros)} ${area} – ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA at $${listing.price.toLocaleString()}`;
+    if (listing.description) {
+      const desc = listing.description.slice(0, 70);
+      msg += ` – ${desc}${desc.length >= 70 ? '...' : ''}`;
+    }
+    msg += formatListingUrl(listing);
+    msg += ` ${random(ALL_CTAS)}`;
     return msg;
   }
 ];
 
-// ─── Stat Templates ───────────────────────────────────────────
+// ─── Enhanced Stat Templates ────────────────────────────────────
 const statTemplates = [
-  (stat) => `📊 ${stat.metric} in ${stat.region}: ${stat.value}. ${random(CTAS)} #KYMarket`,
-  (stat) => `💰 Market update: ${stat.metric} is now ${stat.value} in ${stat.region}. ${random(CTAS)}`,
-  (stat) => `📈 ${stat.metric}: ${stat.value}. ${random(CTAS)} #LouisvilleRealEstate`,
-  (stat) => `💡 Did you know? ${stat.metric} in ${stat.region} is ${stat.value}. ${random(CTAS)}`,
-  (stat) => `🏦 ${stat.metric}: ${stat.value}. ${random(CTAS)}`
+  (stat) => {
+    const intros = [`📊 Here's what the numbers say:`, `📈 Let's look at the data:`, `💡 Key market indicator:`, `🔍 Important stat to know:`, `📉 Market analysis:`];
+    return `${random(intros)} ${stat.metric} in ${stat.region} is ${stat.value}. ${random(ALL_CTAS)} #KYMarket`;
+  },
+  (stat) => {
+    const insights = [`As someone who watches the market daily:`, `From my experience in Louisville:`, `I've been tracking this trend:`, `Here's what this means for buyers/sellers:`, `This is significant for our market:`];
+    return `${random(insights)} ${stat.metric} is now ${stat.value} in ${stat.region}. ${random(ALL_CTAS)}`;
+  },
+  (stat) => {
+    const questions = [`What does this mean for you?`, `Is this good news?`, `How does this affect your buying power?`, `Thinking about selling? Consider:`, `Wondering about market timing? Check:`];
+    return `${random(questions)} ${stat.metric}: ${stat.value} in ${stat.region}. ${random(ALL_CTAS)} #LouisvilleRealEstate`;
+  },
+  (stat) => {
+    const actions = [`Smart buyers are paying attention to:`, `Here's why you should care:`, `This data is crucial for your decision:`, `Want to make informed decisions? Consider:`, `Here's what successful investors watch:`];
+    return `${random(actions)} ${stat.metric} in ${stat.region} is ${stat.value}. ${random(ALL_CTAS)}`;
+  },
+  (stat) => {
+    const trends = [`The trend is clear:`, `We're seeing a pattern:`, `The market is showing:`, `Consistent data shows:`, `The numbers tell us:`];
+    return `${random(trends)} ${stat.metric} sits at ${stat.value} in ${stat.region}. ${random(ALL_CTAS)} #ZerricInsights`;
+  }
 ];
 
-// ─── News Templates ───────────────────────────────────────────
+// ─── Enhanced News Templates ────────────────────────────────────
 const newsTemplates = [
-  (news) => `📰 ${news.headline}: ${news.summary.slice(0, 100)}... ${random(CTAS)} #KYNews`,
-  (news) => `🔔 Big news: ${news.headline}. ${news.summary.slice(0, 80)}... ${random(CTAS)}`,
-  (news) => `🏙️ ${news.headline} – ${news.summary.slice(0, 90)}... ${random(CTAS)}`,
-  (news) => `📢 ${news.headline}. ${news.summary.slice(0, 70)}... ${random(CTAS)} #Louisville`,
-  (news) => `💥 ${news.headline}: ${news.summary.slice(0, 80)}... ${random(CTAS)}`
+  (news) => {
+    const intros = [`📰 Breaking news for Louisville:`, `🔔 Important development:`, `📢 Big news in real estate:`, `🏙️ Major announcement:`, `💥 Just in:`];
+    return `${random(intros)} ${news.headline} – ${news.summary.slice(0, 120)}... ${random(ALL_CTAS)} #KYNews`;
+  },
+  (news) => {
+    const impacts = [`Here's how this affects you:`, `This matters for homeowners:`, `This changes things:`, `What this means for the market:`, `You need to know this:`];
+    return `${random(impacts)} ${news.headline}. ${news.summary.slice(0, 100)}... ${random(ALL_CTAS)} #Louisville`;
+  },
+  (news) => {
+    const analyses = [`Let me break this down:`, `Here's my take:`, `What this really means:`, `As a Realtor, here's my interpretation:`, `The real story behind the headline:`];
+    return `${random(analyses)} ${news.headline} – ${news.summary.slice(0, 110)}... ${random(ALL_CTAS)} #KYMarket`;
+  },
+  (news) => {
+    const punches = [`🗞️ Big news:`, `⚠️ Important update:`, `💡 Key development:`, `📣 Must-read:`, `✨ Major update:`];
+    return `${random(punches)} ${news.headline}. ${news.summary.slice(0, 90)}... ${random(ALL_CTAS)} #LouisvilleLiving`;
+  },
+  (news) => {
+    const opportunities = [`Here's an opportunity:`, `This creates opportunity:`, `Smart investors are watching:`, `This news opens doors:`, `Check out this development:`];
+    return `${random(opportunities)} ${news.headline} – ${news.summary.slice(0, 100)}... ${random(ALL_CTAS)} #ZerricRealty`;
+  }
 ];
 
-// ─── Event Templates ──────────────────────────────────────────
+// ─── Enhanced Event Templates ──────────────────────────────────
 const eventTemplates = [
-  (event) => `📅 ${event.title} – ${event.description?.slice(0, 60)}... ${event.location || ''} ${random(CTAS)} #Event`,
-  (event) => `🗓️ Mark your calendar: ${event.title}. ${event.description?.slice(0, 70)}... ${random(CTAS)}`,
-  (event) => `📍 ${event.title} at ${event.location || 'TBD'}. ${event.description?.slice(0, 60)}... ${random(CTAS)}`
+  (event) => {
+    const socials = [`📅 Mark your calendar!`, `🗓️ Don't miss this event!`, `📌 Save the date:`, `🎉 Exciting event coming up:`, `🤝 Join us for:`];
+    let msg = `${random(socials)} ${event.title} – ${event.description?.slice(0, 80)}...`;
+    if (event.location) msg += ` at ${event.location}`;
+    if (event.date) {
+      const date = new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      msg += ` on ${date}`;
+    }
+    msg += ` ${random(ALL_CTAS)} #LouisvilleEvents`;
+    return msg;
+  },
+  (event) => {
+    const communityStarts = [`🏘️ Great community event:`, `👥 Come together for:`, `🤗 The community is invited to:`, `💪 Local event alert:`, `🌟 Community gathering:`];
+    let msg = `${random(communityStarts)} ${event.title}`;
+    if (event.description) msg += ` – ${event.description.slice(0, 70)}...`;
+    if (event.location) msg += ` at ${event.location}`;
+    msg += ` ${random(ALL_CTAS)} #LouisvilleCommunity`;
+    return msg;
+  },
+  (event) => {
+    const professionalStarts = [`📊 Professional development:`, `💼 Industry event:`, `📈 Network and learn:`, `🎓 Educational event:`, `🤝 Business networking:`];
+    let msg = `${random(professionalStarts)} ${event.title}`;
+    if (event.description) msg += ` – ${event.description.slice(0, 80)}...`;
+    if (event.location) msg += ` at ${event.location}`;
+    msg += ` ${random(ALL_CTAS)} #KYBusiness`;
+    return msg;
+  },
+  (event) => {
+    const announcements = [`📢 Just announced:`, `🗣️ Happening soon:`, `📋 New event:`, `✨ Coming up:`, `🎯 Don't forget:`];
+    let msg = `${random(announcements)} ${event.title}`;
+    if (event.description) {
+      const desc = event.description.slice(0, 60);
+      msg += ` – ${desc}${desc.length >= 60 ? '...' : ''}`;
+    }
+    if (event.location) msg += ` in ${event.location}`;
+    msg += ` ${random(ALL_CTAS)}`;
+    return msg;
+  },
+  (event) => {
+    const invitations = [`🎟️ Who's coming?`, `👋 Will I see you there?`, `🤝 Let's connect:`, `🌟 Be there:`, `💬 Let's discuss:`];
+    let msg = `${random(invitations)} ${event.title}`;
+    if (event.description) msg += ` – ${event.description.slice(0, 70)}...`;
+    if (event.location) msg += ` at ${event.location}`;
+    msg += ` ${random(ALL_CTAS)} #ZerricEvents`;
+    return msg;
+  }
 ];
 
-// ─── Media Templates (NEW) ──────────────────────────────────────
+// ─── Enhanced Media Templates ──────────────────────────────────
 const mediaTemplates = [
-  (media) => `🎬 Check out this ${media.type}: ${media.title}. ${media.description ? media.description.slice(0, 80) + '...' : ''} Watch it here: ${media.url} ${random(CTAS)} #Media`,
-  (media) => `📺 I just shared a ${media.type}: ${media.title}. ${media.description ? media.description.slice(0, 60) : ''} ${random(CTAS)}`,
-  (media) => `✨ ${media.type === 'video' ? 'Video' : 'Image'} alert: ${media.title}. ${media.description ? media.description.slice(0, 70) + '...' : ''} ${random(CTAS)}`,
-  (media) => `📹 ${media.title}. ${media.description ? media.description.slice(0, 80) : ''} ${random(CTAS)} #KYRealEstate`,
-  (media) => `📽️ ${media.type === 'video' ? 'New video' : 'New image'}: ${media.title}. ${media.description ? media.description.slice(0, 60) : ''} ${random(CTAS)}`
+  (media) => {
+    const intros = [`🎬 Check out this ${media.type}:`, `📺 I just shared a ${media.type}:`, `🎥 New ${media.type} alert:`, `📹 ${media.type === 'video' ? 'Video' : 'Image'}:`, `📽️ ${media.type === 'video' ? 'New video' : 'New image'}:`];
+    let msg = `${random(intros)} ${media.title}`;
+    if (media.description) msg += ` – ${media.description.slice(0, 80)}...`;
+    if (media.url) msg += ` Watch it here: ${media.url}`;
+    msg += ` ${random(ALL_CTAS)} #Media`;
+    return msg;
+  },
+  (media) => {
+    const questions = [`What do you think of this?`, `Is this helpful?`, `Would you like more content like this?`, `What's your take?`, `Let me know in the comments`];
+    let msg = `📺 ${media.title}`;
+    if (media.description) msg += ` – ${media.description.slice(0, 60)}`;
+    if (media.url) msg += ` ${media.url}`;
+    msg += ` ${random(questions)} ${random(ALL_CTAS)} #KYRealEstate`;
+    return msg;
+  },
+  (media) => {
+    const calls = [`Check it out:`, `You don't want to miss this:`, `Take a look:`, `Watch this:`, `See for yourself:`];
+    let msg = `${random(calls)} ${media.title}`;
+    if (media.description) msg += ` – ${media.description.slice(0, 70)}...`;
+    if (media.url) msg += ` (${media.url})`;
+    msg += ` ${random(ALL_CTAS)}`;
+    return msg;
+  },
+  (media) => {
+    const highlights = [`Featured content:`, `Staff pick:`, `Must-see:`, `Trending now:`, `Popular:`];
+    let msg = `✨ ${random(highlights)} ${media.title}`;
+    if (media.description) msg += `: ${media.description.slice(0, 80)}...`;
+    if (media.url) msg += ` ${media.url}`;
+    msg += ` ${random(ALL_CTAS)} #ZerricMedia`;
+    return msg;
+  },
+  (media) => {
+    const personal = [`I'm excited to share this`, `Check out what I found`, `I thought you'd enjoy this`, `This caught my eye`, `I want to show you something`];
+    let msg = `${random(personal)} – ${media.title}`;
+    if (media.description) msg += ` (${media.description.slice(0, 60)}...)`;
+    if (media.url) msg += ` ${media.url}`;
+    msg += ` ${random(ALL_CTAS)} #LouisvilleLife`;
+    return msg;
+  }
 ];
 
 // ─── Pexels image fetcher ─────────────────────────────────────
@@ -240,127 +440,153 @@ async function getRandomItem(model, filter = {}) {
   return await model.findOne(filter).skip(randomIndex);
 }
 
+// ─── Get niche-appropriate CTAs ──────────────────────────────
+function getCTAsForNiche(niche) {
+  return NICHE_CTAS[niche] || ALL_CTAS;
+}
+
 // ─── Main bot posting function ───────────────────────────────
 async function postFromBot(botUsername) {
   const botUser = await User.findOne({ username: botUsername, isBot: true });
   if (!botUser) throw new Error('Bot not found');
 
   const niche = botUser.botNiche || 'General';
+  const nicheCTAs = getCTAsForNiche(niche);
+  
   let postContent = '';
   let image = '';
   let video = '';
   let dataType = '';
 
-  // 25% chance to post a trending topic (now from database)
-  if (Math.random() < 0.25) {
-    const topics = await getTrendingTopicsFromDB();
-    if (topics.length > 0) {
-      const topic = random(topics);
-      const template = random(trendingTemplates);
-      postContent = template(topic);
-      dataType = 'trending';
-    }
-  }
+  // ─── Weighted content type selection ────────────────────────
+  const contentTypes = [
+    { value: 'trending', weight: 25 },
+    { value: 'listing', weight: 20 },
+    { value: 'stat', weight: 20 },
+    { value: 'news', weight: 15 },
+    { value: 'event', weight: 10 },
+    { value: 'media', weight: 7 },
+    { value: 'general', weight: 3 }
+  ];
+  const contentType = weightedRandom(contentTypes);
 
-  // If not trending, pick data based on niche
-  if (!postContent) {
-    let dataItem = null;
-    let templateSet = null;
-    let type = '';
+  let dataItem = null;
+  let templateSet = null;
+  let type = '';
 
-    switch (niche) {
-      case 'Finance':
-        dataItem = await getRandomItem(MarketStat, { category: 'Economic' });
-        if (dataItem) { templateSet = statTemplates; type = 'stat'; }
+  // ─── Generate content based on type ─────────────────────────
+  switch (contentType) {
+    case 'trending': {
+      const topics = await getTrendingTopicsFromDB();
+      if (topics.length > 0) {
+        const topic = random(topics);
+        const template = random(trendingTemplates);
+        postContent = template(topic);
+        dataType = 'trending';
         break;
-      case 'Market Data':
-        dataItem = await getRandomItem(MarketStat, { category: 'Price' });
-        if (dataItem) { templateSet = statTemplates; type = 'stat'; }
-        break;
-      case 'Construction':
-        dataItem = await getRandomItem(NewsItem, { category: 'Development' });
-        if (dataItem) { templateSet = newsTemplates; type = 'news'; }
-        break;
-      case 'Neighborhood':
-        dataItem = await getRandomItem(Event, { type: 'Community Meeting' });
-        if (dataItem) { templateSet = eventTemplates; type = 'event'; }
-        break;
-      case 'Investment':
-        dataItem = await getRandomItem(Listing, { propertyType: 'Multi-Family' });
-        if (dataItem) { templateSet = listingTemplates; type = 'listing'; }
-        break;
-      case 'Media': // <-- NEW
-        dataItem = await getRandomItem(MediaItem, { active: true });
-        if (dataItem) { templateSet = mediaTemplates; type = 'media'; }
-        break;
-      default:
-        const rand = Math.random();
-        if (rand < 0.25) {
-          dataItem = await getRandomItem(Listing);
-          if (dataItem) { templateSet = listingTemplates; type = 'listing'; }
-        } else if (rand < 0.50) {
-          dataItem = await getRandomItem(MarketStat);
-          if (dataItem) { templateSet = statTemplates; type = 'stat'; }
-        } else if (rand < 0.75) {
-          dataItem = await getRandomItem(NewsItem);
-          if (dataItem) { templateSet = newsTemplates; type = 'news'; }
-        } else {
-          dataItem = await getRandomItem(MediaItem, { active: true });
-          if (dataItem) { templateSet = mediaTemplates; type = 'media'; }
-        }
-        break;
-    }
-
-    if (dataItem && templateSet) {
-      const template = random(templateSet);
-      postContent = template(dataItem);
-      dataType = type;
-      
-      // If it's a media item, set video or image
-      if (type === 'media' && dataItem.url) {
-        if (dataItem.type === 'video' || dataItem.url.includes('youtube') || dataItem.url.includes('youtu.be')) {
-          video = dataItem.url;
-        } else {
-          image = dataItem.url;
-        }
       }
-      if (dataItem.images && dataItem.images.length > 0) {
-        image = dataItem.images[0];
-      }
+      // fall through if no topics
+    }
+    case 'listing': {
+      const filter = niche === 'Investment' ? { propertyType: 'Multi-Family' } : {};
+      dataItem = await getRandomItem(Listing, filter);
+      if (dataItem) { templateSet = listingTemplates; type = 'listing'; }
+      break;
+    }
+    case 'stat': {
+      const filter = niche === 'Finance' ? { category: 'Economic' } :
+                     niche === 'Market Data' ? { category: 'Price' } : {};
+      dataItem = await getRandomItem(MarketStat, filter);
+      if (dataItem) { templateSet = statTemplates; type = 'stat'; }
+      break;
+    }
+    case 'news': {
+      const filter = niche === 'Construction' ? { category: 'Development' } : {};
+      dataItem = await getRandomItem(NewsItem, filter);
+      if (dataItem) { templateSet = newsTemplates; type = 'news'; }
+      break;
+    }
+    case 'event': {
+      const filter = niche === 'Neighborhood' ? { type: 'Community Meeting' } : {};
+      dataItem = await getRandomItem(Event, filter);
+      if (dataItem) { templateSet = eventTemplates; type = 'event'; }
+      break;
+    }
+    case 'media': {
+      dataItem = await getRandomItem(MediaItem, { active: true });
+      if (dataItem) { templateSet = mediaTemplates; type = 'media'; }
+      break;
+    }
+    case 'general':
+    default: {
+      // Generic posts with personality
+      const genericTemplates = [
+        `👋 ${botUser.name} here! I'm passionate about helping you find your dream home in Louisville ${random(ALL_CTAS)} #ZerricRealty`,
+        `🏡 Louisville real estate is my specialty – let me help you navigate the market ${random(ALL_CTAS)} #LouisvilleLiving`,
+        `💭 Thinking about buying or selling? I'd love to chat about your goals ${random(ALL_CTAS)} #KYHomes`,
+        `✨ Every home has a story – let me help you write yours ${random(ALL_CTAS)} #LouisvilleRealEstate`,
+        `📈 Whether you're a first-time buyer or experienced investor, I'm here to help ${random(ALL_CTAS)} #ZerricInsights`
+      ];
+      postContent = random(genericTemplates);
+      dataType = 'general';
+      break;
     }
   }
 
-  // If no content, fallback to a generic post
-  if (!postContent) {
-    const topics = await getTrendingTopicsFromDB();
-    if (topics.length > 0) {
-      const topic = random(topics);
-      const template = random(trendingTemplates);
-      postContent = template(topic);
-      dataType = 'trending-fallback';
-    } else {
-      postContent = `👋 ${botUser.name} here! Follow me for the latest Louisville real estate insights. ${random(CTAS)} #ScrollCity`;
-      dataType = 'fallback';
-    }
-  }
-
-  // ─── Fetch a Pexels image (35% chance, only if no image/video) ──
-  if (!image && !video && Math.random() < 0.35) {
-    let query = 'louisville';
-    if (dataType === 'listing') query = 'house';
-    else if (dataType === 'stat') query = 'city';
-    else if (dataType === 'news') query = 'city';
-    else if (dataType === 'event') query = 'people';
-    else if (dataType === 'trending' || dataType === 'trending-fallback') query = 'louisville skyline';
-    else if (dataType === 'media') query = 'media';
+  // ─── Process data item if found ─────────────────────────────
+  if (dataItem && templateSet) {
+    const template = random(templateSet);
+    postContent = template(dataItem);
+    dataType = type;
     
+    // If it's a media item, set video or image
+    if (type === 'media' && dataItem.url) {
+      if (dataItem.type === 'video' || dataItem.url.includes('youtube') || dataItem.url.includes('youtu.be')) {
+        video = dataItem.url;
+      } else {
+        image = dataItem.url;
+      }
+    }
+    if (dataItem.images && dataItem.images.length > 0) {
+      image = dataItem.images[0];
+    }
+  }
+
+  // ─── Ensure a CTA is included if missing ────────────────────
+  if (!postContent.includes('zerric.com') && !postContent.includes('Zerric')) {
+    postContent += ` ${random(nicheCTAs)}`;
+  }
+
+  // ─── Fallback if still no content ────────────────────────────
+  if (!postContent) {
+    const fallbacks = [
+      `👋 ${botUser.name} here! Follow me for the latest Louisville real estate insights ${random(ALL_CTAS)} #ScrollCity`,
+      `🏡 Louisville real estate is always changing – let's stay connected ${random(ALL_CTAS)} #KYHomes`,
+      `📊 I track the Louisville market so you don't have to – follow for updates ${random(ALL_CTAS)} #LouisvilleLiving`
+    ];
+    postContent = random(fallbacks);
+    dataType = 'fallback';
+  }
+
+  // ─── Fetch a Pexels image (45% chance, only if no image/video) ──
+  if (!image && !video && Math.random() < 0.45) {
+    const queryMap = {
+      'listing': random(['house', 'home', 'property', 'real estate', 'modern house']),
+      'stat': random(['city', 'urban', 'downtown', 'cityscape', 'skyline']),
+      'news': random(['city', 'skyline', 'buildings', 'construction']),
+      'event': random(['people', 'crowd', 'meeting', 'community', 'gathering']),
+      'trending': random(['louisville skyline', 'downtown louisville', 'louisville', 'kentucky']),
+      'media': random(['media', 'video', 'image', 'technology', 'screen']),
+      'fallback': random(['louisville', 'house', 'city', 'real estate'])
+    };
+    const query = queryMap[dataType] || 'louisville';
     const pexelsImage = await fetchPexelsImage(query);
     if (pexelsImage) {
       image = pexelsImage;
     }
   }
 
-  // Create the post
+  // ─── Create the post ──────────────────────────────────────────
   const post = await Post.create({
     user: botUser._id,
     userName: botUser.name,
@@ -372,10 +598,13 @@ async function postFromBot(botUsername) {
     isBot: true
   });
 
-  // Update lastPostAt
+  // ─── Update lastPostAt ────────────────────────────────────────
   await BotPersona.findOneAndUpdate(
     { username: botUsername },
-    { lastPostAt: new Date() },
+    { 
+      lastPostAt: new Date(),
+      $inc: { postCount: 1 }
+    },
     { upsert: true }
   );
 
