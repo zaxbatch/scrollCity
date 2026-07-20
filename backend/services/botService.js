@@ -9,9 +9,8 @@ const Event = require('../models/Event');
 // ─── Helper: random item from array ──────────────────────────
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// ─── Website link ─────────────────────────────────────────────
+// ─── Website URL (plain, no HTML) ────────────────────────────
 const WEBSITE_URL = 'https://zerric.com';
-const WEBSITE_LINK = `<a href="${WEBSITE_URL}" target="_blank" rel="noopener noreferrer">zerric.com</a>`;
 const AGENT_NAME = 'Zerric';
 
 // ─── Trending Topics ──────────────────────────────────────────
@@ -68,18 +67,18 @@ const TRENDING_TOPICS = [
   }
 ];
 
-// ─── Call‑to‑action pool (all point to Zerric with clickable link) ──
+// ─── Call‑to‑action pool (plain URLs) ─────────────────────────
 const CTAS = [
-  `🏠 Have questions about the Louisville market? Contact Zerric at ${WEBSITE_LINK} – he's the local expert!`,
-  `📞 Thinking of buying or selling? Zerric can help – visit ${WEBSITE_LINK} to get started.`,
-  `📧 Want to know what your home is worth? Zerric offers free valuations – check out ${WEBSITE_LINK}.`,
-  `🔍 Seeing a home you like? Reach out to Zerric at ${WEBSITE_LINK} for a private showing.`,
-  `📈 Not sure if now is the right time? Zerric can walk you through it – ${WEBSITE_LINK}.`,
-  `🏡 Ready to make a move? Zerric is just a click away at ${WEBSITE_LINK}.`,
-  `💬 Have questions about today's market? Zerric has the answers – visit ${WEBSITE_LINK}.`,
-  `📱 Thinking of selling? Zerric can help you get top dollar – ${WEBSITE_LINK}.`,
-  `🤔 Wondering what this means for you? Zerric can explain – reach out at ${WEBSITE_LINK}.`,
-  `🏘️ Looking for the perfect neighborhood? Zerric knows Louisville inside out – ${WEBSITE_LINK}.`
+  `🏠 Have questions about the Louisville market? Contact Zerric at ${WEBSITE_URL} – he's the local expert!`,
+  `📞 Thinking of buying or selling? Zerric can help – visit ${WEBSITE_URL} to get started.`,
+  `📧 Want to know what your home is worth? Zerric offers free valuations – check out ${WEBSITE_URL}.`,
+  `🔍 Seeing a home you like? Reach out to Zerric at ${WEBSITE_URL} for a private showing.`,
+  `📈 Not sure if now is the right time? Zerric can walk you through it – ${WEBSITE_URL}.`,
+  `🏡 Ready to make a move? Zerric is just a click away at ${WEBSITE_URL}.`,
+  `💬 Have questions about today's market? Zerric has the answers – visit ${WEBSITE_URL}.`,
+  `📱 Thinking of selling? Zerric can help you get top dollar – ${WEBSITE_URL}.`,
+  `🤔 Wondering what this means for you? Zerric can explain – reach out at ${WEBSITE_URL}.`,
+  `🏘️ Looking for the perfect neighborhood? Zerric knows Louisville inside out – ${WEBSITE_URL}.`
 ];
 
 // ─── Trending Topic Templates ──────────────────────────────────
@@ -197,7 +196,6 @@ async function postFromBot(botUsername) {
     postContent = template(topic);
     dataType = 'trending';
   } else {
-    // Pick data based on niche
     let dataItem = null;
     let templateSet = null;
     let type = '';
@@ -223,7 +221,7 @@ async function postFromBot(botUsername) {
         dataItem = await getRandomItem(Listing, { propertyType: 'Multi-Family' });
         if (dataItem) { templateSet = listingTemplates; type = 'listing'; }
         break;
-      default: // General
+      default:
         const rand = Math.random();
         if (rand < 0.30) {
           dataItem = await getRandomItem(Listing);
