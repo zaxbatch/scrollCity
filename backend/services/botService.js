@@ -9,8 +9,11 @@ const Event = require('../models/Event');
 // ─── Helper: random item from array ──────────────────────────
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// ─── Website URL (plain) ──────────────────────────────────────
-const WEBSITE_URL = 'https://zerric.com';
+// ─── Website URLs (no trailing slash, no punctuation) ───────
+const MAIN_URL = 'https://zerric.com';
+const MORTGAGE_URL = 'https://zerric.com/mortgage-calculator';
+const GUESTBOOK_URL = 'https://zerric.com/guest-book';
+const SEARCH_URL = 'https://zerric.com/property-search';
 
 // ─── Trending Topics ──────────────────────────────────────────
 const TRENDING_TOPICS = [
@@ -66,27 +69,53 @@ const TRENDING_TOPICS = [
   }
 ];
 
-// ─── Varied CTA pool (mix of link, no‑link, engagement) ──────
+// ─── Expanded Call‑to‑action pool (40 items) ────────────────
 const CTAS = [
-  // With website link (about 40%)
-  `🏠 Have questions? Contact Zerric at ${WEBSITE_URL} – he's the local expert!`,
-  `📞 Thinking of buying or selling? Zerric can help – visit ${WEBSITE_URL} to get started.`,
-  `📧 Want a free home valuation? Check out ${WEBSITE_URL}.`,
-  `🔍 See a home you like? Reach out to Zerric at ${WEBSITE_URL}.`,
-  `📈 Not sure if now is the right time? Zerric can walk you through it – ${WEBSITE_URL}.`,
-  `🏡 Ready to make a move? Zerric is just a click away at ${WEBSITE_URL}.`,
-  `📱 Thinking of selling? Zerric can help you get top dollar – visit ${WEBSITE_URL}.`,
-  // Without website link (about 40%)
-  `💬 Have questions about today's market? Zerric has the answers – just ask!`,
-  `📞 Zerric is available to chat about your real estate goals – reach out anytime.`,
-  `🤔 Wondering what this means for you? Zerric can explain in plain language.`,
-  `🏘️ Looking for the perfect neighborhood? Zerric knows Louisville inside out.`,
-  `📊 Want more insights like this? Zerric would love to connect with you.`,
-  `⭐ Zerric is here to help you navigate the Louisville market with confidence.`,
-  // Engagement prompts (about 20%)
-  `🗣️ What do you think about today's market? Zerric would love to hear your perspective.`,
-  `💡 Did you know? Zerric has helped dozens of families find their dream home.`,
-  `📲 Zerric offers free, no‑pressure consultations – reach out to learn more.`
+  // ----- Website links (clean URLs, no trailing punctuation) -----
+  `🏠 Have questions? Visit my website at ${MAIN_URL} for all things real estate.`,
+  `📞 Thinking of buying or selling? Start with my site: ${MAIN_URL}`,
+  `📧 Want a free home valuation? Check out ${MAIN_URL}`,
+  `🔍 See a home you like? Reach out via my site: ${MAIN_URL}`,
+  `📈 Not sure if now is the right time? I can walk you through it – ${MAIN_URL}`,
+  `🏡 Ready to make a move? Visit ${MAIN_URL} to get started.`,
+  `📱 Thinking of selling? I can help you get top dollar – ${MAIN_URL}`,
+  `📐 Calculate your mortgage payments easily with my mortgage calculator: ${MORTGAGE_URL}`,
+  `📝 Sign my guest book and share your thoughts: ${GUESTBOOK_URL}`,
+  `🔎 Find your dream home with my property search tool: ${SEARCH_URL}`,
+  `💬 I’m always available to chat – just click the chat icon on my site (lower right) at ${MAIN_URL}.`,
+  `🤝 Looking for a trusted Realtor? I’m right here at ${MAIN_URL} – let’s connect!`,
+  `📲 You can talk to me directly via the chat widget on my site: ${MAIN_URL} (look for the icon at the bottom right).`,
+  `🏘️ Explore all my listings and resources at ${MAIN_URL}`,
+
+  // ----- Engagement and soft prompts (without links) -----
+  `💬 What do you think about today’s market? Drop a comment below – I’d love to hear!`,
+  `🗣️ Follow me for more local insights and updates.`,
+  `📢 Let me know what you think – your feedback helps me serve you better.`,
+  `⭐ If you found this useful, please share it with a friend.`,
+  `🤔 Wondering how this affects you? I’d be happy to break it down – just ask!`,
+  `📲 Have a question? I’m just a message away!`,
+  `👍 Like this post? Hit the like button and let me know!`,
+  `💡 Did you know? I have a ton of resources on my site to help you navigate the market.`,
+  `🌟 Thinking of making a move? I’m here to guide you every step of the way.`,
+  `📊 Want more data like this? Follow me for regular market snapshots.`,
+  `🏠 I know a Realtor who can help – and it’s me! 😉`,
+  `💬 Let’s start a conversation – what’s your biggest real estate question?`,
+  `📢 I’d love your opinion: what neighborhood should I cover next?`,
+  `👋 Thanks for being part of this community – your support means a lot.`,
+  `✨ If you’re curious about your home’s value, I can help you find out.`,
+  `📞 I’m always available for a no‑pressure chat – reach out anytime.`,
+  `📲 Have you signed my guest book yet? I’d love to hear your story!`,
+  `🌟 I’m here to make your real estate journey smooth and successful.`,
+  `💬 What’s your favorite Louisville neighborhood? Let me know in the comments!`,
+  `📢 Tag someone who needs to see this!`,
+  `🔔 Follow me to stay up‑to‑date on all things real estate in Kentucky.`,
+  `🏘️ I’m passionate about helping families find their perfect home – let’s chat!`,
+  `📈 Did you know I have a mortgage calculator on my site? Check it out at ${MORTGAGE_URL}`,
+  `📝 Thinking of selling? I can help you get the best price – reach out via ${MAIN_URL}`,
+  `🔎 Searching for a new home? Use my property search tool at ${SEARCH_URL}`,
+  `💬 I’m just a click away – let’s talk about your real estate goals!`,
+  `🎯 Let me know what you’d like to see more of in this community.`,
+  `📲 I’m always active on my site – drop me a message and I’ll reply fast.`
 ];
 
 // ─── Trending Topic Templates ──────────────────────────────────

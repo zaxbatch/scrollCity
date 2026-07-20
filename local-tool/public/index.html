@@ -6,6 +6,7 @@
     <title>Scroll-City · Admin Tool</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
+        /* (same styles as before – omit for brevity, but keep everything) */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -140,7 +141,7 @@
         <button class="tab-btn" data-tab="dashboard">📊 Dashboard</button>
     </div>
 
-    <!-- ─── TAB: Seed PDF (unchanged) ────────────────────────────────── -->
+    <!-- ─── TAB: Seed PDF ────────────────────────────────── -->
     <div id="tab-seed" class="tab-content active">
         <p>Upload a market report (PDF) to extract listings, stats, news, events, and seed them to your live API.</p>
         <div class="upload-area" id="dropZone">
@@ -164,7 +165,7 @@
         </div>
     </div>
 
-    <!-- ─── TAB: Listings ────────────────────────────────────────────── -->
+    <!-- ─── TAB: Listings ────────────────────────────────── -->
     <div id="tab-listings" class="tab-content">
         <h3>🏠 Manage Listings</h3>
         <div class="data-form">
@@ -206,7 +207,7 @@
         <div id="listingTableContainer"><p>Loading...</p></div>
     </div>
 
-    <!-- ─── TAB: Stats ────────────────────────────────────────────────── -->
+    <!-- ─── TAB: Stats ────────────────────────────────────── -->
     <div id="tab-stats" class="tab-content">
         <h3>📊 Manage Market Stats</h3>
         <div class="data-form">
@@ -232,7 +233,7 @@
         <div id="statTableContainer"><p>Loading...</p></div>
     </div>
 
-    <!-- ─── TAB: News ────────────────────────────────────────────────── -->
+    <!-- ─── TAB: News ────────────────────────────────────── -->
     <div id="tab-news" class="tab-content">
         <h3>📰 Manage News Items</h3>
         <div class="data-form">
@@ -259,7 +260,7 @@
         <div id="newsTableContainer"><p>Loading...</p></div>
     </div>
 
-    <!-- ─── TAB: Events ────────────────────────────────────────────────── -->
+    <!-- ─── TAB: Events ────────────────────────────────────── -->
     <div id="tab-events" class="tab-content">
         <h3>📅 Manage Events</h3>
         <div class="data-form">
@@ -286,7 +287,7 @@
         <div id="eventTableContainer"><p>Loading...</p></div>
     </div>
 
-    <!-- ─── TAB: Trending Topics (unchanged) ────────────────────────── -->
+    <!-- ─── TAB: Trending Topics ────────────────────────── -->
     <div id="tab-trending" class="tab-content">
         <h3>📈 Manage Trending Topics</h3>
         <div class="data-form">
@@ -304,7 +305,7 @@
         <div id="topicList"><p>Loading...</p></div>
     </div>
 
-    <!-- ─── TAB: Bots (unchanged) ────────────────────────────────────── -->
+    <!-- ─── TAB: Bots ────────────────────────────────────── -->
     <div id="tab-bots" class="tab-content">
         <h3>🤖 Bot Control</h3>
         <p>Force any bot to post immediately.</p>
@@ -318,7 +319,7 @@
         <div id="botTriggerResult"></div>
     </div>
 
-    <!-- ─── TAB: Dashboard (unchanged) ────────────────────────────────── -->
+    <!-- ─── TAB: Dashboard ────────────────────────────────── -->
     <div id="tab-dashboard" class="tab-content">
         <h3>📊 Data Status</h3>
         <div id="dashboardCards" class="card-grid">
@@ -359,12 +360,273 @@
         });
 
         // ─── PDF tool ────────────────────────────────────────────
-        // (Same as before – keep the full parser – I'll omit for brevity but you can reuse from previous version)
-        // For completeness, we'll include a minimal version, but you should paste your full parser here.
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        // ... (rest of the PDF code remains unchanged) ...
-        // I'll provide a placeholder – you should copy the full parser from your previous index.html.
-        // For now, assume it's present.
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const statusDiv = document.getElementById('status');
+        const outputDiv = document.getElementById('output');
+        const jsonOutput = document.getElementById('jsonOutput');
+        const seedBtn = document.getElementById('seedBtn');
+        const seedStatus = document.getElementById('seedStatus');
+        const seedSummary = document.getElementById('seedSummary');
+
+        let parsedData = null;
+
+        // ─── Drag & drop events ──────────────────────────────────
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = '#fdf8ee'; });
+        dropZone.addEventListener('dragleave', () => { dropZone.style.background = '#fff'; });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.background = '#fff';
+            const files = e.dataTransfer.files;
+            if (files.length) handleFile(files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        // ─── File handler ────────────────────────────────────────
+        function handleFile(file) {
+            if (file.type !== 'application/pdf') {
+                setStatus('❌ Please upload a PDF file.', 'error');
+                return;
+            }
+            setStatus('⏳ Reading PDF...', '');
+            const reader = new FileReader();
+            reader.onload = function() {
+                const typedArray = new Uint8Array(reader.result);
+                pdfjsLib.getDocument(typedArray).promise.then(pdf => {
+                    extractText(pdf).then(text => {
+                        setStatus('🔄 Parsing content...', '');
+                        const parsed = parseText(text);
+                        parsedData = parsed;
+                        jsonOutput.value = JSON.stringify(parsed, null, 2);
+                        outputDiv.style.display = 'block';
+                        seedBtn.disabled = false;
+                        seedStatus.textContent = '';
+                        seedSummary.style.display = 'none';
+                        const total = parsed.listings.length + parsed.stats.length + parsed.news.length + parsed.events.length;
+                        setStatus(`✅ Extracted: ${parsed.listings.length} listings, ${parsed.stats.length} stats, ${parsed.news.length} news, ${parsed.events.length} events (${total} total items)`, 'success');
+                    }).catch(err => {
+                        console.error(err);
+                        setStatus('❌ Error extracting text: ' + err.message, 'error');
+                    });
+                }).catch(err => {
+                    console.error(err);
+                    setStatus('❌ Error reading PDF: ' + err.message, 'error');
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ─── Extract text from PDF ──────────────────────────────
+        function extractText(pdf) {
+            let fullText = '';
+            const pagePromises = [];
+            for (let i = 1; i <= pdf.numPages; i++) {
+                pagePromises.push(pdf.getPage(i).then(page => page.getTextContent()));
+            }
+            return Promise.all(pagePromises).then(pageContents => {
+                pageContents.forEach(content => {
+                    content.items.forEach(item => { fullText += item.str + ' '; });
+                    fullText += '\n';
+                });
+                return fullText;
+            });
+        }
+
+        // ─── Full parser (restored from earlier) ──────────────────
+        function parseText(text) {
+            const listings = [];
+            const stats = [];
+            const news = [];
+            const events = [];
+
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+            // ─── Listings ────────────────────────────────────────
+            const addressRegex = /\d{1,5}\s+[A-Za-z0-9\s.,]+(?:St|Ave|Rd|Blvd|Dr|Ln|Ct|Way|Pkwy|Parkway|Boulevard|Street|Avenue|Road|Lane|Court|Drive|Pl|Place|Cir|Circle|Terrace|Ter|Trl|Trail|Hwy|Highway)/i;
+            const priceRegex = /\$\s*([\d,]+)/;
+            const bedsRegex = /(\d+)\s*(?:bed|br|bedroom)/i;
+            const bathsRegex = /(\d+\.?\d*)\s*(?:bath|ba|bathroom)/i;
+            const sqftRegex = /(\d+[,.\d]*)\s*(?:sq\s*ft|sqft|square\s*feet?)/i;
+            const mlsRegex = /MLS\s*ID:\s*([A-Z0-9]+)/i;
+
+            let i = 0;
+            while (i < lines.length) {
+                const line = lines[i];
+                if (addressRegex.test(line) || line.includes('MLS ID')) {
+                    let address = line.match(addressRegex)?.[0] || '';
+                    let priceMatch = line.match(priceRegex) || lines[i+1]?.match(priceRegex);
+                    let price = priceMatch ? parseInt(priceMatch[1].replace(/,/g, '')) : null;
+                    let beds = line.match(bedsRegex)?.[1] || lines[i+1]?.match(bedsRegex)?.[1] || null;
+                    let baths = line.match(bathsRegex)?.[1] || lines[i+1]?.match(bathsRegex)?.[1] || null;
+                    let sqft = line.match(sqftRegex)?.[1] || lines[i+1]?.match(sqftRegex)?.[1] || null;
+                    let mls = line.match(mlsRegex)?.[1] || lines[i+1]?.match(mlsRegex)?.[1] || null;
+                    let status = 'Active';
+                    if (line.includes('Pending') || (lines[i+1] && lines[i+1].includes('Pending'))) status = 'Pending';
+                    if (line.includes('Closed') || (lines[i+1] && lines[i+1].includes('Closed'))) status = 'Closed';
+
+                    if (address && price) {
+                        listings.push({
+                            address,
+                            city: 'Louisville',
+                            state: 'KY',
+                            zip: address.match(/\d{5}/)?.[0] || '',
+                            price,
+                            bedrooms: beds ? parseInt(beds) : null,
+                            bathrooms: baths ? parseFloat(baths) : null,
+                            sqft: sqft ? parseInt(sqft.replace(/,/g, '')) : null,
+                            propertyType: 'Single Family',
+                            status,
+                            description: `MLS ID: ${mls || 'N/A'}`,
+                            images: [],
+                            source: 'PDF Import'
+                        });
+                    }
+                }
+                i++;
+            }
+
+            // ─── Stats ──────────────────────────────────────────
+            const statRegex = /(Median|Average|Total|New|Pending|Closed|Days on Market|Months of Inventory|Active Listings|List Price|Sold Price)\s*:?\s*(.*?)(?:\n|$)/i;
+            for (const line of lines) {
+                const match = line.match(statRegex);
+                if (match) {
+                    const metric = match[1].trim();
+                    const value = match[2].trim().replace(/,$/, '');
+                    if (/\d/.test(value)) {
+                        stats.push({
+                            metric,
+                            value,
+                            region: 'Louisville, KY',
+                            category: 'Price',
+                            source: 'PDF Report',
+                            date: new Date()
+                        });
+                    }
+                }
+            }
+
+            // ─── News ────────────────────────────────────────────
+            const newsKeywords = ['approves', 'announced', 'new', 'breaks ground', 'development', 'market', 'prices', 'construction', 'grant'];
+            for (const line of lines) {
+                if (newsKeywords.some(kw => line.toLowerCase().includes(kw)) && line.length > 30 && line.length < 200) {
+                    let headline = line;
+                    let summary = '';
+                    if (line.includes('.')) {
+                        const parts = line.split('.');
+                        headline = parts[0] + '.';
+                        summary = parts.slice(1).join('. ').trim();
+                    }
+                    news.push({
+                        headline: headline.slice(0, 100),
+                        summary: summary || line.slice(0, 150),
+                        category: 'Market',
+                        source: 'PDF Report'
+                    });
+                }
+            }
+
+            // ─── Events ──────────────────────────────────────────
+            const eventKeywords = ['meeting', 'tour', 'webinar', 'open house', 'community', 'fair'];
+            for (const line of lines) {
+                if (eventKeywords.some(kw => line.toLowerCase().includes(kw)) && /\d{1,2}\/\d{1,2}/.test(line)) {
+                    events.push({
+                        title: line.slice(0, 80),
+                        description: line.slice(0, 120),
+                        location: 'Louisville, KY',
+                        startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                        type: 'Other'
+                    });
+                }
+            }
+
+            // Deduplicate listings by address
+            const seen = new Set();
+            const uniqueListings = listings.filter(l => {
+                const key = l.address + l.price;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+
+            return {
+                listings: uniqueListings,
+                stats: stats.slice(0, 20),
+                news: news.slice(0, 10),
+                events: events.slice(0, 5)
+            };
+        }
+
+        // ─── UI helpers ──────────────────────────────────────────
+        function setStatus(msg, type) {
+            statusDiv.textContent = msg;
+            statusDiv.className = 'status';
+            if (type === 'success') statusDiv.classList.add('success');
+            else if (type === 'error') statusDiv.classList.add('error');
+        }
+
+        function copyJSON() {
+            const text = jsonOutput.value;
+            navigator.clipboard.writeText(text).then(() => alert('✅ Copied!')).catch(() => {
+                jsonOutput.select();
+                document.execCommand('copy');
+                alert('✅ Copied!');
+            });
+        }
+
+        function downloadJSON() {
+            const text = jsonOutput.value;
+            const blob = new Blob([text], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'seed-data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ─── Seed to API ─────────────────────────────────────────
+        async function seedToAPI() {
+            if (!parsedData) {
+                alert('No data to seed. Please upload a PDF first.');
+                return;
+            }
+            if (!parsedData.listings.length && !parsedData.stats.length && !parsedData.news.length && !parsedData.events.length) {
+                alert('No data found to seed. Please check your PDF.');
+                return;
+            }
+
+            seedBtn.disabled = true;
+            seedStatus.textContent = '⏳ Seeding...';
+            seedSummary.style.display = 'none';
+
+            try {
+                const response = await fetch('/seed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(parsedData)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    const { results } = result;
+                    let html = '';
+                    for (const [key, val] of Object.entries(results)) {
+                        html += `<div class="card"><h3>${val.count}</h3><p>${key}</p></div>`;
+                    }
+                    seedSummary.innerHTML = html;
+                    seedSummary.style.display = 'grid';
+                    seedStatus.textContent = '✅ Done!';
+                } else {
+                    seedStatus.textContent = '❌ Error: ' + (result.error || 'Unknown error');
+                }
+            } catch (err) {
+                seedStatus.textContent = '❌ Network error: ' + err.message;
+            } finally {
+                seedBtn.disabled = false;
+            }
+        }
 
         // ─── CRUD functions ──────────────────────────────────────
 
@@ -381,7 +643,6 @@
                     return;
                 }
                 let html = `<table><thead><tr>`;
-                // Dynamically build headers from first item
                 const first = data[0];
                 const keys = Object.keys(first).filter(k => !['_id', '__v', 'createdAt', 'updatedAt'].includes(k));
                 keys.forEach(k => html += `<th>${k}</th>`);
@@ -408,42 +669,33 @@
         }
 
         async function addItem(type) {
-            // Build object from form fields (specific to each type)
-            const formId = type; // 'listings', 'stats', etc.
-            const data = {};
-            // We'll use generic approach – get all inputs inside the form.
             const form = document.querySelector(`#tab-${type} .data-form`);
+            const data = {};
             const inputs = form.querySelectorAll('input, select, textarea');
             inputs.forEach(el => {
-                let key = el.id.replace(type, '').toLowerCase();
-                // Remove common prefixes
-                key = key.replace(/address|city|zip|price|beds|baths|sqft|status|propertytype|source|description|metric|value|region|category|headline|summary|title|location|type|date/, (match) => match);
-                // More specific mapping:
-                if (el.id.includes('Address')) data.address = el.value;
-                else if (el.id.includes('City')) data.city = el.value;
-                else if (el.id.includes('Zip')) data.zip = el.value;
-                else if (el.id.includes('Price')) data.price = parseFloat(el.value);
-                else if (el.id.includes('Beds')) data.bedrooms = parseInt(el.value);
-                else if (el.id.includes('Baths')) data.bathrooms = parseFloat(el.value);
-                else if (el.id.includes('Sqft')) data.sqft = parseInt(el.value);
-                else if (el.id.includes('Status')) data.status = el.value;
-                else if (el.id.includes('PropertyType')) data.propertyType = el.value;
-                else if (el.id.includes('Source')) data.source = el.value;
-                else if (el.id.includes('Description')) data.description = el.value;
-                else if (el.id.includes('Metric')) data.metric = el.value;
-                else if (el.id.includes('Value')) data.value = el.value;
-                else if (el.id.includes('Region')) data.region = el.value;
-                else if (el.id.includes('Category')) data.category = el.value;
-                else if (el.id.includes('Headline')) data.headline = el.value;
-                else if (el.id.includes('Summary')) data.summary = el.value;
-                else if (el.id.includes('Title')) data.title = el.value;
-                else if (el.id.includes('Location')) data.location = el.value;
-                else if (el.id.includes('Type') && el.id !== 'eventType') data.type = el.value;
-                else if (el.id === 'eventType') data.type = el.value;
-                else if (el.id.includes('Date')) data.startDate = new Date(el.value);
+                const id = el.id;
+                if (id.includes('Address')) data.address = el.value;
+                else if (id.includes('City')) data.city = el.value || 'Louisville';
+                else if (id.includes('Zip')) data.zip = el.value;
+                else if (id.includes('Price')) data.price = parseFloat(el.value);
+                else if (id.includes('Beds')) data.bedrooms = parseInt(el.value);
+                else if (id.includes('Baths')) data.bathrooms = parseFloat(el.value);
+                else if (id.includes('Sqft')) data.sqft = parseInt(el.value);
+                else if (id.includes('Status')) data.status = el.value;
+                else if (id.includes('PropertyType')) data.propertyType = el.value;
+                else if (id.includes('Source')) data.source = el.value || 'Manual';
+                else if (id.includes('Description')) data.description = el.value;
+                else if (id.includes('Metric')) data.metric = el.value;
+                else if (id.includes('Value')) data.value = el.value;
+                else if (id.includes('Region')) data.region = el.value || 'Louisville, KY';
+                else if (id.includes('Category')) data.category = el.value;
+                else if (id.includes('Headline')) data.headline = el.value;
+                else if (id.includes('Summary')) data.summary = el.value;
+                else if (id.includes('Title')) data.title = el.value;
+                else if (id.includes('Location')) data.location = el.value;
+                else if (id === 'eventType') data.type = el.value;
+                else if (id.includes('Date')) data.startDate = new Date(el.value);
             });
-            // Set defaults for required fields
-            if (!data.city) data.city = 'Louisville';
             if (!data.state) data.state = 'KY';
             if (!data.source) data.source = 'Manual';
 
@@ -459,10 +711,7 @@
                 });
                 if (!res.ok) throw new Error(await res.text());
                 statusSpan.textContent = '✅ Added!';
-                // Clear form
-                form.querySelectorAll('input, textarea, select').forEach(el => {
-                    if (el.type !== 'select-one') el.value = '';
-                });
+                form.querySelectorAll('input, textarea').forEach(el => el.value = '');
                 loadTable(type);
             } catch (err) {
                 statusSpan.textContent = '❌ Error: ' + err.message;
@@ -483,32 +732,167 @@
         }
 
         async function editItem(type, id) {
-            // Placeholder – you can implement a modal or inline edit later.
             alert('Edit functionality coming soon. For now, you can delete and re-add.');
         }
 
-        // ─── Trending Topics (unchanged) ──────────────────────────
+        // ─── Trending Topics ────────────────────────────────────
         async function loadTopics() {
-            // ... (same as before) ...
+            const list = document.getElementById('topicList');
+            list.innerHTML = '<p>Loading...</p>';
+            try {
+                const res = await fetch('/admin/trending?all=true');
+                if (!res.ok) throw new Error('Failed');
+                const topics = await res.json();
+                if (topics.length === 0) {
+                    list.innerHTML = '<p>No topics found.</p>';
+                    return;
+                }
+                let html = `<table><thead><tr><th>Headline</th><th>Source</th><th>Active</th><th>Actions</th></tr></thead><tbody>`;
+                topics.forEach(t => {
+                    html += `<tr>
+                        <td><strong>${t.headline}</strong><br><small>${t.detail?.slice(0, 60)}...</small></td>
+                        <td>${t.source || 'N/A'}</td>
+                        <td>${t.active ? '✅' : '❌'}</td>
+                        <td>
+                            <button onclick="toggleTopic('${t._id}', ${!t.active})" class="secondary" style="padding:0.2rem 0.6rem;">${t.active ? 'Deactivate' : 'Activate'}</button>
+                            <button onclick="deleteTopic('${t._id}')" class="danger" style="padding:0.2rem 0.6rem;">Delete</button>
+                        </td>
+                    </tr>`;
+                });
+                html += `</tbody></table>`;
+                list.innerHTML = html;
+            } catch (err) {
+                list.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+            }
         }
+
         async function createTopic() {
-            // ... (same as before) ...
+            const headline = document.getElementById('topicHeadline').value.trim();
+            const detail = document.getElementById('topicDetail').value.trim();
+            const source = document.getElementById('topicSource').value.trim();
+            if (!headline || !detail) {
+                document.getElementById('topicStatus').textContent = '❌ Headline and detail are required.';
+                return;
+            }
+            const btn = event.target;
+            btn.disabled = true;
+            document.getElementById('topicStatus').textContent = '⏳ Creating...';
+            try {
+                const res = await fetch('/admin/trending', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ headline, detail, source })
+                });
+                if (!res.ok) throw new Error(await res.text());
+                document.getElementById('topicStatus').textContent = '✅ Topic created!';
+                document.getElementById('topicHeadline').value = '';
+                document.getElementById('topicDetail').value = '';
+                document.getElementById('topicSource').value = '';
+                loadTopics();
+            } catch (err) {
+                document.getElementById('topicStatus').textContent = '❌ Error: ' + err.message;
+            } finally {
+                btn.disabled = false;
+            }
         }
-        async function toggleTopic(id, newActive) { /* ... */ }
-        async function deleteTopic(id) { /* ... */ }
 
-        // ─── Bots (unchanged) ──────────────────────────────────────
-        async function loadBots() { /* ... */ }
-        async function triggerBot() { /* ... */ }
+        async function toggleTopic(id, newActive) {
+            try {
+                const res = await fetch(`/admin/trending/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ active: newActive })
+                });
+                if (!res.ok) throw new Error('Failed');
+                loadTopics();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
 
-        // ─── Dashboard (unchanged) ──────────────────────────────────
-        async function loadDashboard() { /* ... */ }
+        async function deleteTopic(id) {
+            if (!confirm('Delete this topic permanently?')) return;
+            try {
+                const res = await fetch(`/admin/trending/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed');
+                loadTopics();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
 
-        // ─── Seed functions (unchanged) ────────────────────────────
-        // ...
+        // ─── Bots ──────────────────────────────────────────────
+        const BOT_USERNAMES = ['lourealtybot', 'kymarketbot', 'nuludevbot', 'highlandsagent', 'kyinvestorbot', 'louclosingbot', 'kynewsbot', 'stmatthewsre', 'lourentalbot', 'kyhistoricbot'];
 
-        // ─── Initial load ──────────────────────────────────────────
-        // Load dashboard by default (since it's not the first tab, but we can load when clicked)
+        async function loadBots() {
+            const select = document.getElementById('botSelect');
+            select.innerHTML = '<option value="">Select a bot...</option>';
+            BOT_USERNAMES.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b;
+                opt.textContent = b;
+                select.appendChild(opt);
+            });
+        }
+
+        async function triggerBot() {
+            const username = document.getElementById('botSelect').value;
+            if (!username) {
+                document.getElementById('botTriggerStatus').textContent = '❌ Please select a bot.';
+                return;
+            }
+            const btn = event.target;
+            btn.disabled = true;
+            document.getElementById('botTriggerStatus').textContent = '⏳ Triggering...';
+            document.getElementById('botTriggerResult').innerHTML = '';
+            try {
+                const res = await fetch('/admin/bots/trigger', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ botUsername: username })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('botTriggerStatus').textContent = '✅ Bot posted!';
+                    document.getElementById('botTriggerResult').innerHTML = `<pre>${JSON.stringify(data.post, null, 2)}</pre>`;
+                } else {
+                    document.getElementById('botTriggerStatus').textContent = '❌ Error: ' + (data.error || 'Unknown');
+                }
+            } catch (err) {
+                document.getElementById('botTriggerStatus').textContent = '❌ Network error: ' + err.message;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ─── Dashboard ──────────────────────────────────────────
+        async function loadDashboard() {
+            const container = document.getElementById('dashboardCards');
+            container.innerHTML = '<div class="card"><h3>⏳</h3><p>Loading...</p></div>';
+            try {
+                const res = await fetch('/admin/status');
+                if (!res.ok) throw new Error('Failed to fetch status');
+                const data = await res.json();
+                const items = [
+                    { label: 'Listings', value: data.listings },
+                    { label: 'Stats', value: data.stats },
+                    { label: 'News', value: data.news },
+                    { label: 'Events', value: data.events },
+                    { label: 'Bots', value: data.bots },
+                    { label: 'Trending Topics', value: data.trending || 0 }
+                ];
+                container.innerHTML = items.map(i =>
+                    `<div class="card"><h3>${i.value}</h3><p>${i.label}</p></div>`
+                ).join('');
+            } catch (err) {
+                container.innerHTML = `<div class="card"><h3>❌</h3><p>${err.message}</p></div>`;
+            }
+        }
+
+        // ─── Initial load ──────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBots();
+        });
     </script>
 </body>
 </html>
