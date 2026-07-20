@@ -6,9 +6,15 @@ const EventSchema = new mongoose.Schema({
   location: String,
   startDate: { type: Date, required: true },
   endDate: Date,
-  type: { type: String, enum: ['Open House', 'Community Meeting', 'Webinar', 'Other'], default: 'Other' },
-  link: String,
+  type: {
+    type: String,
+    enum: ['Open House', 'Community Meeting', 'Webinar', 'Other'],
+    default: 'Other'
+  },
+  url: { type: String, default: '' }, // NEW
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model('Event', EventSchema);

@@ -169,10 +169,9 @@
         <button class="tab-btn" data-tab="dashboard">📊 Dashboard</button>
     </div>
 
-    <!-- ─── TAB: Seed PDF ────────────────────────────────────────── -->
+    <!-- ─── TAB: Seed PDF (unchanged) ────────────────────────────── -->
     <div id="tab-seed" class="tab-content active">
         <p>Upload a PDF, JSON, HTML, or paste text – we'll extract listings, stats, news, and events.</p>
-
         <div class="upload-area" id="dropZone">
             <label for="fileInput">
                 <i>📤</i>
@@ -180,23 +179,20 @@
             </label>
             <input type="file" id="fileInput" accept=".pdf,.json,.html,.txt" />
         </div>
-
         <div style="margin: 1rem 0;">
             <label for="manualTextInput"><strong>Or paste text here:</strong></label>
-            <textarea id="manualTextInput" placeholder="Paste any text (e.g., from a report, webpage, or document)..." rows="4"></textarea>
+            <textarea id="manualTextInput" placeholder="Paste any text..." rows="4"></textarea>
             <div class="actions" style="margin-top:0.5rem;">
                 <button onclick="parseManualText()" class="secondary">📝 Parse Text</button>
                 <span id="manualParseStatus"></span>
             </div>
         </div>
-
         <div class="checkbox-group">
             <label><input type="checkbox" id="extractListings" checked /> 🏠 Listings</label>
             <label><input type="checkbox" id="extractStats" checked /> 📊 Stats</label>
             <label><input type="checkbox" id="extractNews" checked /> 📰 News</label>
             <label><input type="checkbox" id="extractEvents" checked /> 📅 Events</label>
         </div>
-
         <div id="status" class="status">📎 Ready</div>
         <div id="output" style="display:none;">
             <h3>📊 Extracted Data</h3>
@@ -217,7 +213,7 @@
         <div class="data-form">
             <h4>Add New Listing</h4>
             <div class="form-row">
-                <input type="text" id="listingAddress" placeholder="Address (e.g. 123 Main St)" />
+                <input type="text" id="listingAddress" placeholder="Address" />
                 <input type="text" id="listingCity" placeholder="City" value="Louisville" />
                 <input type="text" id="listingZip" placeholder="Zip" />
             </div>
@@ -242,11 +238,8 @@
                     <option value="Land">Land</option>
                     <option value="Multi-Family">Multi-Family</option>
                 </select>
-                <input type="text" id="listingSource" placeholder="Source (e.g. MLS)" value="Manual" />
-            </div>
-            <!-- NEW URL field -->
-            <div class="form-row">
-                <input type="text" id="listingUrl" placeholder="Listing URL (optional)" />
+                <input type="text" id="listingSource" placeholder="Source" value="Manual" />
+                <input type="text" id="listingUrl" placeholder="URL (optional)" />
             </div>
             <div class="form-row">
                 <textarea id="listingDescription" placeholder="Description" rows="2"></textarea>
@@ -263,8 +256,8 @@
         <div class="data-form">
             <h4>Add New Stat</h4>
             <div class="form-row">
-                <input type="text" id="statMetric" placeholder="Metric (e.g. Median Home Price)" />
-                <input type="text" id="statValue" placeholder="Value (e.g. $285,000)" />
+                <input type="text" id="statMetric" placeholder="Metric" />
+                <input type="text" id="statValue" placeholder="Value" />
                 <input type="text" id="statRegion" placeholder="Region" value="Louisville, KY" />
             </div>
             <div class="form-row">
@@ -275,7 +268,8 @@
                     <option value="Rental">Rental</option>
                     <option value="Economic">Economic</option>
                 </select>
-                <input type="text" id="statSource" placeholder="Source (e.g. GLAR)" value="PDF Report" />
+                <input type="text" id="statSource" placeholder="Source" value="PDF Report" />
+                <input type="text" id="statUrl" placeholder="URL (optional)" />
             </div>
             <button onclick="addItem('stats')">➕ Add Stat</button>
             <span id="statStatusMsg"></span>
@@ -290,7 +284,7 @@
             <h4>Add New News</h4>
             <div class="form-row">
                 <input type="text" id="newsHeadline" placeholder="Headline" />
-                <input type="text" id="newsSource" placeholder="Source (e.g. Courier-Journal)" value="PDF Report" />
+                <input type="text" id="newsSource" placeholder="Source" value="PDF Report" />
             </div>
             <div class="form-row">
                 <textarea id="newsSummary" placeholder="Summary" rows="2"></textarea>
@@ -303,6 +297,7 @@
                     <option value="Community">Community</option>
                     <option value="Policy">Policy</option>
                 </select>
+                <input type="text" id="newsUrl" placeholder="URL (optional)" />
             </div>
             <button onclick="addItem('news')">➕ Add News</button>
             <span id="newsStatusMsg"></span>
@@ -330,6 +325,7 @@
                     <option value="Other">Other</option>
                 </select>
                 <input type="date" id="eventDate" />
+                <input type="text" id="eventUrl" placeholder="URL (optional)" />
             </div>
             <button onclick="addItem('events')">➕ Add Event</button>
             <span id="eventStatusMsg"></span>
@@ -345,6 +341,7 @@
             <div class="form-row">
                 <input type="text" id="topicHeadline" placeholder="Headline" />
                 <input type="text" id="topicSource" placeholder="Source" />
+                <input type="text" id="topicUrl" placeholder="URL (optional)" />
             </div>
             <div class="form-row">
                 <textarea id="topicDetail" placeholder="Detailed description..." rows="2"></textarea>
@@ -870,8 +867,12 @@
                 else if (id.includes('Location')) data.location = el.value;
                 else if (id === 'eventType') data.type = el.value;
                 else if (id.includes('Date')) data.startDate = new Date(el.value);
-                // NEW: capture the URL field
+                // URL fields
                 else if (id === 'listingUrl') data.url = el.value;
+                else if (id === 'statUrl') data.url = el.value;
+                else if (id === 'newsUrl') data.url = el.value;
+                else if (id === 'eventUrl') data.url = el.value;
+                else if (id === 'topicUrl') data.url = el.value;
             });
             if (!data.state) data.state = 'KY';
             if (!data.source) data.source = 'Manual';
@@ -947,6 +948,7 @@
             const headline = document.getElementById('topicHeadline').value.trim();
             const detail = document.getElementById('topicDetail').value.trim();
             const source = document.getElementById('topicSource').value.trim();
+            const url = document.getElementById('topicUrl').value.trim();
             if (!headline || !detail) {
                 document.getElementById('topicStatus').textContent = '❌ Headline and detail are required.';
                 return;
@@ -958,13 +960,14 @@
                 const res = await fetch('/admin/trending', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ headline, detail, source })
+                    body: JSON.stringify({ headline, detail, source, url })
                 });
                 if (!res.ok) throw new Error(await res.text());
                 document.getElementById('topicStatus').textContent = '✅ Topic created!';
                 document.getElementById('topicHeadline').value = '';
                 document.getElementById('topicDetail').value = '';
                 document.getElementById('topicSource').value = '';
+                document.getElementById('topicUrl').value = '';
                 loadTopics();
             } catch (err) {
                 document.getElementById('topicStatus').textContent = '❌ Error: ' + err.message;

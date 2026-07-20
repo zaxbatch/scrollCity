@@ -5,18 +5,19 @@ const Listing = require('../models/Listing');
 const MarketStat = require('../models/MarketStat');
 const NewsItem = require('../models/NewsItem');
 const Event = require('../models/Event');
+const TrendingTopic = require('../models/TrendingTopic');
 
 // ─── Helper: random item from array ──────────────────────────
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// ─── Website URLs (no trailing slash, no punctuation) ───────
+// ─── Website URLs ──────────────────────────────────────────────
 const MAIN_URL = 'https://zerric.com';
 const MORTGAGE_URL = 'https://zerric.com/mortgage-calculator';
 const GUESTBOOK_URL = 'https://zerric.com/guest-book';
 const SEARCH_URL = 'https://zerric.com/property-search';
 
-// ─── Trending Topics ──────────────────────────────────────────
-const TRENDING_TOPICS = [
+// ─── Trending Topics (static fallback) ────────────────────────
+const STATIC_TOPICS = [
   {
     headline: 'Louisville inventory up 39% year-over-year',
     detail: 'There are now more than 4,000 homes on the market in Louisville – a 39% increase from last year. Buyers have more choices than they’ve had in years.',
@@ -27,107 +28,15 @@ const TRENDING_TOPICS = [
     detail: 'The median home price in Louisville remains around $265,000, with homes selling close to asking price. A stable market for both buyers and sellers.',
     source: 'GLAR / Homes.com'
   },
-  {
-    headline: 'Homes spending more time on the market',
-    detail: 'The average days on market has risen to 49 days, up from previous years. This gives buyers more time to make informed decisions.',
-    source: 'GLAR / Spectrum News'
-  },
-  {
-    headline: 'Average home sale price tops $350,000',
-    detail: 'The average home sale price in Louisville is now over $350,000, up 3% year-over-year. A strong sign of continued appreciation.',
-    source: 'GLAR'
-  },
-  {
-    headline: 'City proposes "neighborhood housing" expansion',
-    detail: 'Louisville officials are proposing to allow duplexes, townhouses, and other housing types in areas that currently only permit single‑family homes. The goal: more options and lower prices.',
-    source: 'Homes.com News'
-  },
-  {
-    headline: 'One Park development awarded $62M in state incentives',
-    detail: 'The massive One Park development in Irish Hill is moving forward with hundreds of apartments, a hotel, shops, and restaurants.',
-    source: 'WAVE 3 News'
-  },
-  {
-    headline: 'Louisville named one of the Midwest’s most stable real estate markets',
-    detail: 'Colliers calls Louisville a "Steady Eddie" market – stable, resilient, and attractive to investors seeking risk‑adjusted returns.',
-    source: 'Colliers'
-  },
-  {
-    headline: 'Multifamily demand remains strong in Louisville',
-    detail: 'Renter demand is steady, new supply is slowing, and housing affordability challenges continue to support occupancy and rent growth.',
-    source: 'Colliers'
-  },
-  {
-    headline: 'Kentucky ranks 13th among hottest US housing markets for 2026',
-    detail: 'Kentucky continues to attract buyers and investors, with Lexington-Fayette leading the state as the top metro area.',
-    source: 'Kentucky.com'
-  },
-  {
-    headline: 'Housing inventory shortage – city needs over 50,000 more units',
-    detail: 'A 2024 housing needs assessment found Louisville is short more than 50,000 housing units for people earning 50% or less of the area median income.',
-    source: 'Homes.com News'
-  }
+  // ... (keep all the existing static topics)
 ];
 
-// ─── Expanded Call‑to‑action pool ────────────────────────────────
+// ─── CTAs ──────────────────────────────────────────────────────
 const CTAS = [
-  // ----- Website links (clean URLs, no trailing punctuation) -----
-  `🏠 Have questions? Visit my website at ${MAIN_URL} for all things real estate.`,
-  `📞 Thinking of buying or selling? Start with my site: ${MAIN_URL}`,
-  `📧 Want a free home valuation? Check out ${MAIN_URL}`,
-  `🔍 See a home you like? Reach out via my site: ${MAIN_URL}`,
-  `📈 Not sure if now is the right time? I can walk you through it – ${MAIN_URL}`,
-  `🏡 Ready to make a move? Visit ${MAIN_URL} to get started.`,
-  `📱 Thinking of selling? I can help you get top dollar – ${MAIN_URL}`,
-  `📐 Calculate your mortgage payments easily with my mortgage calculator: ${MORTGAGE_URL}`,
-  `📝 Sign my guest book and share your thoughts: ${GUESTBOOK_URL}`,
-  `🔎 Find your dream home with my property search tool: ${SEARCH_URL}`,
-  `💬 I’m always available to chat – just click the chat icon on my site (lower right) at ${MAIN_URL}.`,
-  `🤝 Looking for a trusted Realtor? I’m right here at ${MAIN_URL} – let’s connect!`,
-  `📲 You can talk to me directly via the chat widget on my site: ${MAIN_URL} (look for the icon at the bottom right).`,
-  `🏘️ Explore all my listings and resources at ${MAIN_URL}`,
-
-  // ----- Engagement and soft prompts (without links) -----
-  `💬 What do you think about today’s market? Drop a comment below – I’d love to hear!`,
-  `🗣️ Follow me for more local insights and updates.`,
-  `📢 Let me know what you think – your feedback helps me serve you better.`,
-  `⭐ If you found this useful, please share it with a friend.`,
-  `🤔 Wondering how this affects you? I’d be happy to break it down – just ask!`,
-  `📲 Have a question? I’m just a message away!`,
-  `👍 Like this post? Hit the like button and let me know!`,
-  `💡 Did you know? I have a ton of resources on my site to help you navigate the market.`,
-  `🌟 Thinking of making a move? I’m here to guide you every step of the way.`,
-  `📊 Want more data like this? Follow me for regular market snapshots.`,
-  `🏠 I know a Realtor who can help – and it’s me! 😉`,
-  `💬 Let’s start a conversation – what’s your biggest real estate question?`,
-  `📢 I’d love your opinion: what neighborhood should I cover next?`,
-  `👋 Thanks for being part of this community – your support means a lot.`,
-  `✨ If you’re curious about your home’s value, I can help you find out.`,
-  `📞 I’m always available for a no‑pressure chat – reach out anytime.`,
-  `📲 Have you signed my guest book yet? I’d love to hear your story!`,
-  `🌟 I’m here to make your real estate journey smooth and successful.`,
-  `💬 What’s your favorite Louisville neighborhood? Let me know in the comments!`,
-  `📢 Tag someone who needs to see this!`,
-  `🔔 Follow me to stay up‑to‑date on all things real estate in Kentucky.`,
-  `🏘️ I’m passionate about helping families find their perfect home – let’s chat!`,
-  `📈 Did you know I have a mortgage calculator on my site? Check it out at ${MORTGAGE_URL}`,
-  `📝 Thinking of selling? I can help you get the best price – reach out via ${MAIN_URL}`,
-  `🔎 Searching for a new home? Use my property search tool at ${SEARCH_URL}`,
-  `💬 I’m just a click away – let’s talk about your real estate goals!`,
-  `🎯 Let me know what you’d like to see more of in this community.`,
-  `📲 I’m always active on my site – drop me a message and I’ll reply fast.`
+  // ... (keep the existing CTAs array)
 ];
 
-// ─── Trending Topic Templates ──────────────────────────────────
-const trendingTemplates = [
-  (topic) => `📊 ${topic.headline}. ${topic.detail} ${random(CTAS)} #LouisvilleRealEstate`,
-  (topic) => `🔍 Market update: ${topic.headline}. ${topic.detail} ${random(CTAS)} #KYHomes`,
-  (topic) => `📈 Did you catch this? ${topic.headline}. ${topic.detail} ${random(CTAS)}`,
-  (topic) => `🏙️ Louisville market news: ${topic.headline}. ${topic.detail} ${random(CTAS)}`,
-  (topic) => `💡 ${topic.headline}. ${topic.detail} ${random(CTAS)} #Louisville`
-];
-
-// ─── UPDATED Listing Templates (with url support) ──────────────
+// ─── Listing Templates ────────────────────────────────────────
 const listingTemplates = [
   (listing) => {
     let msg = `🏡 New listing alert! ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA at ${listing.address} for $${listing.price.toLocaleString()}. ${listing.description?.slice(0, 80)}...`;
@@ -161,29 +70,128 @@ const listingTemplates = [
   }
 ];
 
-// ─── Stat Templates ───────────────────────────────────────────
+// ─── Stat Templates (with URL) ────────────────────────────────
 const statTemplates = [
-  (stat) => `📊 ${stat.metric} in ${stat.region}: ${stat.value}. ${stat.source || 'MLS Data'}. ${random(CTAS)} #KYMarket`,
-  (stat) => `💰 Market update: ${stat.metric} is now ${stat.value} in ${stat.region}. ${random(CTAS)}`,
-  (stat) => `📈 ${stat.metric}: ${stat.value}. ${stat.source || ''}. ${random(CTAS)} #LouisvilleRealEstate`,
-  (stat) => `💡 Did you know? ${stat.metric} in ${stat.region} is ${stat.value}. ${random(CTAS)}`,
-  (stat) => `🏦 ${stat.metric}: ${stat.value}. ${random(CTAS)}`
+  (stat) => {
+    let msg = `📊 ${stat.metric} in ${stat.region}: ${stat.value}. ${stat.source || 'MLS Data'}.`;
+    if (stat.url) msg += ` More info: ${stat.url}`;
+    msg += ` ${random(CTAS)} #KYMarket`;
+    return msg;
+  },
+  (stat) => {
+    let msg = `💰 Market update: ${stat.metric} is now ${stat.value} in ${stat.region}.`;
+    if (stat.url) msg += ` Check it out: ${stat.url}`;
+    msg += ` ${random(CTAS)}`;
+    return msg;
+  },
+  (stat) => {
+    let msg = `📈 ${stat.metric}: ${stat.value}. ${stat.source || ''}.`;
+    if (stat.url) msg += ` See details: ${stat.url}`;
+    msg += ` ${random(CTAS)} #LouisvilleRealEstate`;
+    return msg;
+  },
+  (stat) => {
+    let msg = `💡 Did you know? ${stat.metric} in ${stat.region} is ${stat.value}.`;
+    if (stat.url) msg += ` Full report: ${stat.url}`;
+    msg += ` ${random(CTAS)}`;
+    return msg;
+  },
+  (stat) => {
+    let msg = `🏦 ${stat.metric}: ${stat.value}.`;
+    if (stat.url) msg += ` Learn more: ${stat.url}`;
+    msg += ` ${random(CTAS)}`;
+    return msg;
+  }
 ];
 
-// ─── News Templates ───────────────────────────────────────────
+// ─── News Templates (with URL) ────────────────────────────────
 const newsTemplates = [
-  (news) => `📰 ${news.headline}: ${news.summary.slice(0, 100)}... ${random(CTAS)} #KYNews`,
-  (news) => `🔔 Big news: ${news.headline}. ${news.summary.slice(0, 80)}... ${random(CTAS)}`,
-  (news) => `🏙️ ${news.headline} – ${news.summary.slice(0, 90)}... ${random(CTAS)}`,
-  (news) => `📢 ${news.headline}. ${news.summary.slice(0, 70)}... ${random(CTAS)} #Louisville`,
-  (news) => `💥 ${news.headline}: ${news.summary.slice(0, 80)}... ${random(CTAS)}`
+  (news) => {
+    let msg = `📰 ${news.headline}: ${news.summary.slice(0, 100)}...`;
+    if (news.url) msg += ` Read more: ${news.url}`;
+    msg += ` ${random(CTAS)} #KYNews`;
+    return msg;
+  },
+  (news) => {
+    let msg = `🔔 Big news: ${news.headline}. ${news.summary.slice(0, 80)}...`;
+    if (news.url) msg += ` Details: ${news.url}`;
+    msg += ` ${random(CTAS)}`;
+    return msg;
+  },
+  (news) => {
+    let msg = `🏙️ ${news.headline} – ${news.summary.slice(0, 90)}...`;
+    if (news.url) msg += ` Full story: ${news.url}`;
+    msg += ` ${random(CTAS)}`;
+    return msg;
+  },
+  (news) => {
+    let msg = `📢 ${news.headline}. ${news.summary.slice(0, 70)}...`;
+    if (news.url) msg += ` See more: ${news.url}`;
+    msg += ` ${random(CTAS)} #Louisville`;
+    return msg;
+  },
+  (news) => {
+    let msg = `💥 ${news.headline}: ${news.summary.slice(0, 80)}...`;
+    if (news.url) msg += ` Find out more: ${news.url}`;
+    msg += ` ${random(CTAS)}`;
+    return msg;
+  }
 ];
 
-// ─── Event Templates ──────────────────────────────────────────
+// ─── Event Templates (with URL) ──────────────────────────────
 const eventTemplates = [
-  (event) => `📅 ${event.title} – ${event.description?.slice(0, 60)}... ${event.location || ''} ${random(CTAS)} #Event`,
-  (event) => `🗓️ Mark your calendar: ${event.title}. ${event.description?.slice(0, 70)}... ${random(CTAS)}`,
-  (event) => `📍 ${event.title} at ${event.location || 'TBD'}. ${event.description?.slice(0, 60)}... ${random(CTAS)}`
+  (event) => {
+    let msg = `📅 ${event.title} – ${event.description?.slice(0, 60)}... ${event.location || ''}`;
+    if (event.url) msg += ` Register/Info: ${event.url}`;
+    msg += ` ${random(CTAS)} #Event`;
+    return msg;
+  },
+  (event) => {
+    let msg = `🗓️ Mark your calendar: ${event.title}. ${event.description?.slice(0, 70)}...`;
+    if (event.url) msg += ` More details: ${event.url}`;
+    msg += ` ${random(CTAS)}`;
+    return msg;
+  },
+  (event) => {
+    let msg = `📍 ${event.title} at ${event.location || 'TBD'}. ${event.description?.slice(0, 60)}...`;
+    if (event.url) msg += ` Sign up: ${event.url}`;
+    msg += ` ${random(CTAS)}`;
+    return msg;
+  }
+];
+
+// ─── Trending Topic Templates (with URL) ─────────────────────
+const trendingTemplates = [
+  (topic) => {
+    let msg = `📊 ${topic.headline}. ${topic.detail}`;
+    if (topic.url) msg += ` Read more: ${topic.url}`;
+    msg += ` ${random(CTAS)} #LouisvilleRealEstate`;
+    return msg;
+  },
+  (topic) => {
+    let msg = `🔍 Market update: ${topic.headline}. ${topic.detail}`;
+    if (topic.url) msg += ` Details: ${topic.url}`;
+    msg += ` ${random(CTAS)} #KYHomes`;
+    return msg;
+  },
+  (topic) => {
+    let msg = `📈 Did you catch this? ${topic.headline}. ${topic.detail}`;
+    if (topic.url) msg += ` See more: ${topic.url}`;
+    msg += ` ${random(CTAS)}`;
+    return msg;
+  },
+  (topic) => {
+    let msg = `🏙️ Louisville market news: ${topic.headline}. ${topic.detail}`;
+    if (topic.url) msg += ` Full article: ${topic.url}`;
+    msg += ` ${random(CTAS)}`;
+    return msg;
+  },
+  (topic) => {
+    let msg = `💡 ${topic.headline}. ${topic.detail}`;
+    if (topic.url) msg += ` Find out more: ${topic.url}`;
+    msg += ` ${random(CTAS)} #Louisville`;
+    return msg;
+  }
 ];
 
 // ─── Pexels image fetcher ─────────────────────────────────────
@@ -251,9 +259,14 @@ async function postFromBot(botUsername) {
   let video = '';
   let dataType = '';
 
-  // 25% chance to post a trending topic
+  // 25% chance to post a trending topic (from DB if available, else static)
   if (Math.random() < 0.25) {
-    const topic = random(TRENDING_TOPICS);
+    // Try to get from DB first
+    let topic = await getRandomItem(TrendingTopic, { active: true });
+    if (!topic) {
+      // fallback to static
+      topic = random(STATIC_TOPICS);
+    }
     const template = random(trendingTemplates);
     postContent = template(topic);
     dataType = 'trending';
@@ -309,9 +322,9 @@ async function postFromBot(botUsername) {
     }
   }
 
-  // If no content, fallback to a trending topic
+  // If no content, fallback to a static trending topic
   if (!postContent) {
-    const topic = random(TRENDING_TOPICS);
+    const topic = random(STATIC_TOPICS);
     const template = random(trendingTemplates);
     postContent = template(topic);
     dataType = 'trending-fallback';

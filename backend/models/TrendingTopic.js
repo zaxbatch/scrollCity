@@ -5,6 +5,7 @@ const TrendingTopicSchema = new mongoose.Schema({
   detail: { type: String, required: true },
   source: { type: String, default: 'GLAR' },
   active: { type: Boolean, default: true },
+  url: { type: String, default: '' }, // NEW
   createdAt: { type: Date, default: Date.now }
 });
 
