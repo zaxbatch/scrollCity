@@ -471,3 +471,10 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   footer.classList.remove('visible');
 });
+
+app.filter('cleanUndefined', function() {
+  return function(text) {
+    if (!text) return '';
+    return text.replace(/\bundefined\b/g, '');
+  };
+});

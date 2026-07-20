@@ -116,7 +116,7 @@
                                         <span class="sc-post-handle">@{{post.userHandle}}</span>
                                         <span class="sc-post-time">{{post.createdAt | timeAgo}}</span>
                                     </div>
-                                    <div class="sc-post-content" ng-bind-html="post.content | trusted"></div>
+                                    <div class="sc-post-content" ng-bind-html="post.content | cleanUndefined | trusted"></div>
                                     <div class="sc-post-media" ng-if="post.image">
                                         <img ng-src="{{post.image}}" alt="Post image" />
                                     </div>
