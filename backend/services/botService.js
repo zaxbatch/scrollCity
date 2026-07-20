@@ -6,7 +6,7 @@ const MarketStat = require('../models/MarketStat');
 const NewsItem = require('../models/NewsItem');
 const Event = require('../models/Event');
 const TrendingTopic = require('../models/TrendingTopic');
-const MediaItem = require('../models/MediaItem'); // <-- NEW
+const MediaItem = require('../models/MediaItem');
 
 // ─── Helper: random item from array ──────────────────────────
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -139,6 +139,16 @@ const CTAS_CATEGORIES = {
     `❓ Ready to upgrade? Let's find your next home together`,
     `💭 Considering downsizing? Zerric can guide you through it`,
     `❓ Wondering about market trends? Zerric tracks them daily`
+  ],
+  coffee: [
+    `☕ Want to chat about your real estate goals over coffee? Zerric would love to meet you – reach out via ${MAIN_URL}`,
+    `☕ Let's grab coffee and talk about your home dreams – Zerric is always up for a good conversation. Connect at ${MAIN_URL}`,
+    `☕ I'm buying coffee for anyone ready to talk real estate – reach out to Zerric at ${MAIN_URL}`,
+    `☕ Have questions? Let's meet for coffee – Zerric is available to discuss your goals. Visit ${MAIN_URL}`,
+    `☕ Coffee is on me if you want to chat about buying or selling – Zerric is just a click away at ${MAIN_URL}`,
+    `☕ Ready to make a plan? Zerric would love to sit down with you over coffee – start at ${MAIN_URL}`,
+    `☕ Let's meet up and talk real estate – Zerric loves connecting with the community. Find him at ${MAIN_URL}`,
+    `☕ Thinking of moving? Let's have coffee and discuss your options – Zerric is here to help. ${MAIN_URL}`
   ]
 };
 
@@ -147,36 +157,62 @@ const ALL_CTAS = Object.values(CTAS_CATEGORIES).flat();
 
 // ─── Niche‑specific CTA preference ─────────────────────────────
 const NICHE_CTAS = {
-  'Finance': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.questions],
-  'Market Data': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.engagement],
-  'Construction': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.engagement],
-  'Neighborhood': [...CTAS_CATEGORIES.engagement, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.questions],
-  'Investment': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.questions],
-  'Media': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.engagement, ...CTAS_CATEGORIES.questions],
+  'Finance': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.questions, ...CTAS_CATEGORIES.coffee],
+  'Market Data': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.engagement, ...CTAS_CATEGORIES.coffee],
+  'Construction': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.engagement, ...CTAS_CATEGORIES.coffee],
+  'Neighborhood': [...CTAS_CATEGORIES.engagement, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.questions, ...CTAS_CATEGORIES.coffee],
+  'Investment': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.referral, ...CTAS_CATEGORIES.questions, ...CTAS_CATEGORIES.coffee],
+  'Media': [...CTAS_CATEGORIES.website, ...CTAS_CATEGORIES.engagement, ...CTAS_CATEGORIES.questions, ...CTAS_CATEGORIES.coffee],
   'General': ALL_CTAS
 };
+
+// ─── Flexible hashtag sets (always includes #ZerricDotcom sometimes) ──
+const HASHTAG_SETS = [
+  '#LouisvilleRealEstate #ZerricDotcom',
+  '#KYHomes #ZerricDotcom',
+  '#LouisvilleLiving #ZerricDotcom',
+  '#LouisvilleMarket #ZerricDotcom',
+  '#KYMarket #ZerricDotcom',
+  '#ZerricRealty #ZerricDotcom',
+  '#LouisvilleRealEstate',
+  '#KYHomes',
+  '#LouisvilleLiving',
+  '#LouisvilleMarket'
+];
+
+// ─── Smooth transition starters ────────────────────────────────
+const TRANSITIONS = [
+  'By the way,',
+  'Speaking of which,',
+  'Anyway,',
+  'Now,',
+  'So,',
+  'You know,',
+  'Just a thought,',
+  'And while we’re on the subject,'
+];
 
 // ─── Enhanced Trending Topic Templates ──────────────────────────
 const trendingTemplates = [
   (topic) => {
     const openings = [`📊 Market update:`, `🔍 Breaking news:`, `📈 Important shift:`, `🏙️ Louisville alert:`, `💡 Did you catch this?`];
-    return `${random(openings)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} #LouisvilleRealEstate`;
+    return `${random(openings)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (topic) => {
     const intros = [`Here's what's happening:`, `Let me share key data:`, `Every buyer should know:`, `Important for homeowners:`, `The market is shifting:`];
-    return `${random(intros)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} #KYHomes`;
+    return `${random(intros)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (topic) => {
     const personal = [`As your local Realtor:`, `Speaking from experience:`, `I've been watching this:`, `From my perspective:`, `Here's what I'm seeing:`];
-    return `${random(personal)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} #LouisvilleLiving`;
+    return `${random(personal)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (topic) => {
     const questions = [`What does this mean for you?`, `How does this affect your home?`, `Is this good for buyers or sellers?`, `Thinking about moving?`, `Curious about your home's value?`];
-    return `${random(questions)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} #LouisvilleMarket`;
+    return `${random(questions)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (topic) => {
     const calls = [`Let's break this down:`, `Want to understand this?`, `Ready to make a smart move?`, `Need expert guidance?`, `Let me help you navigate:`];
-    return `${random(calls)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} #ZerricRealty`;
+    return `${random(calls)} ${topic.headline}. ${topic.detail} ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   }
 ];
 
@@ -190,7 +226,7 @@ const listingTemplates = [
       msg += ` – ${desc}${desc.length >= 100 ? '...' : ''}`;
     }
     msg += formatListingUrl(listing);
-    msg += ` ${random(ALL_CTAS)} #LouisvilleRealEstate`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (listing) => {
@@ -198,7 +234,7 @@ const listingTemplates = [
     let msg = `🏠 ${listing.bedrooms || '?'}BR/${listing.bathrooms || '?'}BA in ${listing.city || 'Louisville'} ${random(features)} – $${listing.price.toLocaleString()}`;
     if (listing.sqft) msg += `, ${listing.sqft} sqft`;
     msg += formatListingUrl(listing);
-    msg += ` ${random(ALL_CTAS)} #KYHomes`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (listing) => {
@@ -207,7 +243,7 @@ const listingTemplates = [
     if (listing.sqft) msg += `, ${listing.sqft} sqft`;
     msg += ` at $${listing.price.toLocaleString()}`;
     msg += formatListingUrl(listing);
-    msg += ` ${random(ALL_CTAS)} #LouisvilleRealEstate`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (listing) => {
@@ -218,7 +254,7 @@ const listingTemplates = [
       msg += ` – ${desc}${desc.length >= 80 ? '...' : ''}`;
     }
     msg += formatListingUrl(listing);
-    msg += ` ${random(ALL_CTAS)}`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (listing) => {
@@ -227,7 +263,7 @@ const listingTemplates = [
     if (listing.sqft) msg += ` with ${listing.sqft} sqft`;
     msg += ` for $${listing.price.toLocaleString()}`;
     msg += formatListingUrl(listing);
-    msg += ` ${random(ALL_CTAS)} #LouisvilleLiving`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (listing) => {
@@ -239,7 +275,7 @@ const listingTemplates = [
       msg += ` – ${desc}${desc.length >= 70 ? '...' : ''}`;
     }
     msg += formatListingUrl(listing);
-    msg += ` ${random(ALL_CTAS)}`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   }
 ];
@@ -248,23 +284,23 @@ const listingTemplates = [
 const statTemplates = [
   (stat) => {
     const intros = [`📊 Here's what the numbers say:`, `📈 Let's look at the data:`, `💡 Key market indicator:`, `🔍 Important stat to know:`, `📉 Market analysis:`];
-    return `${random(intros)} ${stat.metric} in ${stat.region} is ${stat.value}. ${random(ALL_CTAS)} #KYMarket`;
+    return `${random(intros)} ${stat.metric} in ${stat.region} is ${stat.value}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (stat) => {
     const insights = [`As someone who watches the market daily:`, `From my experience in Louisville:`, `I've been tracking this trend:`, `Here's what this means for buyers/sellers:`, `This is significant for our market:`];
-    return `${random(insights)} ${stat.metric} is now ${stat.value} in ${stat.region}. ${random(ALL_CTAS)}`;
+    return `${random(insights)} ${stat.metric} is now ${stat.value} in ${stat.region}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (stat) => {
     const questions = [`What does this mean for you?`, `Is this good news?`, `How does this affect your buying power?`, `Thinking about selling? Consider:`, `Wondering about market timing? Check:`];
-    return `${random(questions)} ${stat.metric}: ${stat.value} in ${stat.region}. ${random(ALL_CTAS)} #LouisvilleRealEstate`;
+    return `${random(questions)} ${stat.metric}: ${stat.value} in ${stat.region}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (stat) => {
     const actions = [`Smart buyers are paying attention to:`, `Here's why you should care:`, `This data is crucial for your decision:`, `Want to make informed decisions? Consider:`, `Here's what successful investors watch:`];
-    return `${random(actions)} ${stat.metric} in ${stat.region} is ${stat.value}. ${random(ALL_CTAS)}`;
+    return `${random(actions)} ${stat.metric} in ${stat.region} is ${stat.value}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (stat) => {
     const trends = [`The trend is clear:`, `We're seeing a pattern:`, `The market is showing:`, `Consistent data shows:`, `The numbers tell us:`];
-    return `${random(trends)} ${stat.metric} sits at ${stat.value} in ${stat.region}. ${random(ALL_CTAS)} #ZerricInsights`;
+    return `${random(trends)} ${stat.metric} sits at ${stat.value} in ${stat.region}. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   }
 ];
 
@@ -272,23 +308,23 @@ const statTemplates = [
 const newsTemplates = [
   (news) => {
     const intros = [`📰 Breaking news for Louisville:`, `🔔 Important development:`, `📢 Big news in real estate:`, `🏙️ Major announcement:`, `💥 Just in:`];
-    return `${random(intros)} ${news.headline} – ${news.summary.slice(0, 120)}... ${random(ALL_CTAS)} #KYNews`;
+    return `${random(intros)} ${news.headline} – ${news.summary.slice(0, 120)}... ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (news) => {
     const impacts = [`Here's how this affects you:`, `This matters for homeowners:`, `This changes things:`, `What this means for the market:`, `You need to know this:`];
-    return `${random(impacts)} ${news.headline}. ${news.summary.slice(0, 100)}... ${random(ALL_CTAS)} #Louisville`;
+    return `${random(impacts)} ${news.headline}. ${news.summary.slice(0, 100)}... ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (news) => {
     const analyses = [`Let me break this down:`, `Here's my take:`, `What this really means:`, `As a Realtor, here's my interpretation:`, `The real story behind the headline:`];
-    return `${random(analyses)} ${news.headline} – ${news.summary.slice(0, 110)}... ${random(ALL_CTAS)} #KYMarket`;
+    return `${random(analyses)} ${news.headline} – ${news.summary.slice(0, 110)}... ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (news) => {
     const punches = [`🗞️ Big news:`, `⚠️ Important update:`, `💡 Key development:`, `📣 Must-read:`, `✨ Major update:`];
-    return `${random(punches)} ${news.headline}. ${news.summary.slice(0, 90)}... ${random(ALL_CTAS)} #LouisvilleLiving`;
+    return `${random(punches)} ${news.headline}. ${news.summary.slice(0, 90)}... ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   },
   (news) => {
     const opportunities = [`Here's an opportunity:`, `This creates opportunity:`, `Smart investors are watching:`, `This news opens doors:`, `Check out this development:`];
-    return `${random(opportunities)} ${news.headline} – ${news.summary.slice(0, 100)}... ${random(ALL_CTAS)} #ZerricRealty`;
+    return `${random(opportunities)} ${news.headline} – ${news.summary.slice(0, 100)}... ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
   }
 ];
 
@@ -302,7 +338,7 @@ const eventTemplates = [
       const date = new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       msg += ` on ${date}`;
     }
-    msg += ` ${random(ALL_CTAS)} #LouisvilleEvents`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (event) => {
@@ -310,7 +346,7 @@ const eventTemplates = [
     let msg = `${random(communityStarts)} ${event.title}`;
     if (event.description) msg += ` – ${event.description.slice(0, 70)}...`;
     if (event.location) msg += ` at ${event.location}`;
-    msg += ` ${random(ALL_CTAS)} #LouisvilleCommunity`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (event) => {
@@ -318,7 +354,7 @@ const eventTemplates = [
     let msg = `${random(professionalStarts)} ${event.title}`;
     if (event.description) msg += ` – ${event.description.slice(0, 80)}...`;
     if (event.location) msg += ` at ${event.location}`;
-    msg += ` ${random(ALL_CTAS)} #KYBusiness`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (event) => {
@@ -329,7 +365,7 @@ const eventTemplates = [
       msg += ` – ${desc}${desc.length >= 60 ? '...' : ''}`;
     }
     if (event.location) msg += ` in ${event.location}`;
-    msg += ` ${random(ALL_CTAS)}`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (event) => {
@@ -337,7 +373,7 @@ const eventTemplates = [
     let msg = `${random(invitations)} ${event.title}`;
     if (event.description) msg += ` – ${event.description.slice(0, 70)}...`;
     if (event.location) msg += ` at ${event.location}`;
-    msg += ` ${random(ALL_CTAS)} #ZerricEvents`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   }
 ];
@@ -349,7 +385,7 @@ const mediaTemplates = [
     let msg = `${random(intros)} ${media.title}`;
     if (media.description) msg += ` – ${media.description.slice(0, 80)}...`;
     if (media.url) msg += ` Watch it here: ${media.url}`;
-    msg += ` ${random(ALL_CTAS)} #Media`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (media) => {
@@ -357,7 +393,7 @@ const mediaTemplates = [
     let msg = `📺 ${media.title}`;
     if (media.description) msg += ` – ${media.description.slice(0, 60)}`;
     if (media.url) msg += ` ${media.url}`;
-    msg += ` ${random(questions)} ${random(ALL_CTAS)} #KYRealEstate`;
+    msg += ` ${random(questions)} ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (media) => {
@@ -365,7 +401,7 @@ const mediaTemplates = [
     let msg = `${random(calls)} ${media.title}`;
     if (media.description) msg += ` – ${media.description.slice(0, 70)}...`;
     if (media.url) msg += ` (${media.url})`;
-    msg += ` ${random(ALL_CTAS)}`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (media) => {
@@ -373,7 +409,7 @@ const mediaTemplates = [
     let msg = `✨ ${random(highlights)} ${media.title}`;
     if (media.description) msg += `: ${media.description.slice(0, 80)}...`;
     if (media.url) msg += ` ${media.url}`;
-    msg += ` ${random(ALL_CTAS)} #ZerricMedia`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   },
   (media) => {
@@ -381,7 +417,7 @@ const mediaTemplates = [
     let msg = `${random(personal)} – ${media.title}`;
     if (media.description) msg += ` (${media.description.slice(0, 60)}...)`;
     if (media.url) msg += ` ${media.url}`;
-    msg += ` ${random(ALL_CTAS)} #LouisvilleLife`;
+    msg += ` ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`;
     return msg;
   }
 ];
@@ -519,13 +555,15 @@ async function postFromBot(botUsername) {
     }
     case 'general':
     default: {
-      // Generic posts with personality
+      // Generic posts with personality – now including coffee mentions
       const genericTemplates = [
-        `👋 ${botUser.name} here! I'm passionate about helping you find your dream home in Louisville ${random(ALL_CTAS)} #ZerricRealty`,
-        `🏡 Louisville real estate is my specialty – let me help you navigate the market ${random(ALL_CTAS)} #LouisvilleLiving`,
-        `💭 Thinking about buying or selling? I'd love to chat about your goals ${random(ALL_CTAS)} #KYHomes`,
-        `✨ Every home has a story – let me help you write yours ${random(ALL_CTAS)} #LouisvilleRealEstate`,
-        `📈 Whether you're a first-time buyer or experienced investor, I'm here to help ${random(ALL_CTAS)} #ZerricInsights`
+        `👋 ${botUser.name} here! I'm passionate about helping you find your dream home in Louisville. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`,
+        `🏡 Louisville real estate is my specialty – let me help you navigate the market. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`,
+        `💭 Thinking about buying or selling? I'd love to chat about your goals. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`,
+        `✨ Every home has a story – let me help you write yours. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`,
+        `📈 Whether you're a first-time buyer or experienced investor, I'm here to help. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`,
+        `☕ I'd love to sit down with you over coffee and talk about your real estate dreams. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`,
+        `🤝 Let's connect – I'm always open to a friendly chat about the market. ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`
       ];
       postContent = random(genericTemplates);
       dataType = 'general';
@@ -553,16 +591,22 @@ async function postFromBot(botUsername) {
   }
 
   // ─── Ensure a CTA is included if missing ────────────────────
-  if (!postContent.includes('zerric.com') && !postContent.includes('Zerric')) {
-    postContent += ` ${random(nicheCTAs)}`;
+  // Check if postContent already has a CTA (contains a URL or a common CTA starter)
+  // We'll just append a random CTA if it doesn't have one of our CTAs.
+  const hasCTA = ALL_CTAS.some(cta => postContent.includes(cta));
+  if (!hasCTA) {
+    // Add a smooth transition and a CTA
+    const transition = random(TRANSITIONS);
+    const cta = random(nicheCTAs);
+    postContent += ` ${transition} ${cta}`;
   }
 
   // ─── Fallback if still no content ────────────────────────────
   if (!postContent) {
     const fallbacks = [
-      `👋 ${botUser.name} here! Follow me for the latest Louisville real estate insights ${random(ALL_CTAS)} #ScrollCity`,
-      `🏡 Louisville real estate is always changing – let's stay connected ${random(ALL_CTAS)} #KYHomes`,
-      `📊 I track the Louisville market so you don't have to – follow for updates ${random(ALL_CTAS)} #LouisvilleLiving`
+      `👋 ${botUser.name} here! Follow me for the latest Louisville real estate insights ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`,
+      `🏡 Louisville real estate is always changing – let's stay connected ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`,
+      `📊 I track the Louisville market so you don't have to – follow for updates ${random(ALL_CTAS)} ${random(HASHTAG_SETS)}`
     ];
     postContent = random(fallbacks);
     dataType = 'fallback';
