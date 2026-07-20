@@ -778,6 +778,8 @@
     }
 
     // ─── CRUD functions for tables ──────────────────────────────
+
+    // Load table data for a given type (listings, stats, news, events, media)
     async function loadTable(type) {
       const containerId = type + 'TableContainer';
       const container = document.getElementById(containerId);
@@ -791,9 +793,10 @@
           container.innerHTML = '<p>No items found.</p>';
           return;
         }
-        let html = '<table><thead><tr>';
+        // Build table
         const first = data[0];
         const keys = Object.keys(first).filter(k => !['_id', '__v', 'createdAt', 'updatedAt'].includes(k));
+        let html = `<table><thead><tr>`;
         keys.forEach(k => html += `<th>${k}</th>`);
         html += '<th>Actions</th></tr></thead><tbody>';
         data.forEach(item => {
@@ -817,8 +820,66 @@
       }
     }
 
+    // Add an item via POST /admin/data/:type
     async function addItem(type) {
-      alert('Add item functionality is implemented in the full version.');
+      const form = document.querySelector(`#tab-${type} .data-form`);
+      const data = {};
+      const inputs = form.querySelectorAll('input, select, textarea');
+      inputs.forEach(el => {
+        const id = el.id;
+        if (id.includes('Address')) data.address = el.value;
+        else if (id.includes('City')) data.city = el.value || 'Louisville';
+        else if (id.includes('Zip')) data.zip = el.value;
+        else if (id.includes('Price')) data.price = parseFloat(el.value);
+        else if (id.includes('Beds')) data.bedrooms = parseInt(el.value);
+        else if (id.includes('Baths')) data.bathrooms = parseFloat(el.value);
+        else if (id.includes('Sqft')) data.sqft = parseInt(el.value);
+        else if (id.includes('Status')) data.status = el.value;
+        else if (id.includes('PropertyType')) data.propertyType = el.value;
+        else if (id.includes('Source')) data.source = el.value || 'Manual';
+        else if (id.includes('Description')) data.description = el.value;
+        else if (id.includes('Metric')) data.metric = el.value;
+        else if (id.includes('Value')) data.value = el.value;
+        else if (id.includes('Region')) data.region = el.value || 'Louisville, KY';
+        else if (id.includes('Category')) data.category = el.value;
+        else if (id.includes('Headline')) data.headline = el.value;
+        else if (id.includes('Summary')) data.summary = el.value;
+        else if (id.includes('Title')) data.title = el.value;
+        else if (id.includes('Location')) data.location = el.value;
+        else if (id === 'eventType') data.type = el.value;
+        else if (id.includes('Date')) data.startDate = new Date(el.value);
+        else if (id === 'listingUrl') data.url = el.value;
+        // Media fields
+        else if (id === 'mediaTitle') data.title = el.value;
+        else if (id === 'mediaType') data.type = el.value;
+        else if (id === 'mediaUrl') data.url = el.value;
+        else if (id === 'mediaThumbnail') data.thumbnail = el.value;
+        else if (id === 'mediaDescription') data.description = el.value;
+      });
+      // Set defaults
+      if (!data.state) data.state = 'KY';
+      if (!data.source) data.source = 'Manual';
+
+      const btn = event.target;
+      btn.disabled = true;
+      const statusSpan = document.getElementById(`${type}StatusMsg`);
+      statusSpan.textContent = '⏳ Adding...';
+      try {
+        const res = await fetch(`/admin/data/${type}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error(await res.text());
+        statusSpan.textContent = '✅ Added!';
+        // Clear form
+        form.querySelectorAll('input, textarea').forEach(el => el.value = '');
+        loadTable(type);
+      } catch (err) {
+        statusSpan.textContent = '❌ Error: ' + err.message;
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     async function deleteItem(type, id) {
@@ -833,7 +894,7 @@
     }
 
     async function editItem(type, id) {
-      alert('Edit functionality coming soon.');
+      alert('Edit functionality coming soon. For now, you can delete and re-add.');
     }
 
     // ─── Trending Topics ──────────────────────────────────────────
@@ -869,7 +930,33 @@
     }
 
     async function createTopic() {
-      alert('Create topic implemented in full version.');
+      const headline = document.getElementById('topicHeadline').value.trim();
+      const detail = document.getElementById('topicDetail').value.trim();
+      const source = document.getElementById('topicSource').value.trim();
+      if (!headline || !detail) {
+        document.getElementById('topicStatus').textContent = '❌ Headline and detail are required.';
+        return;
+      }
+      const btn = event.target;
+      btn.disabled = true;
+      document.getElementById('topicStatus').textContent = '⏳ Creating...';
+      try {
+        const res = await fetch('/admin/trending', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ headline, detail, source })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        document.getElementById('topicStatus').textContent = '✅ Topic created!';
+        document.getElementById('topicHeadline').value = '';
+        document.getElementById('topicDetail').value = '';
+        document.getElementById('topicSource').value = '';
+        loadTopics();
+      } catch (err) {
+        document.getElementById('topicStatus').textContent = '❌ Error: ' + err.message;
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     async function toggleTopic(id, newActive) {
