@@ -9,9 +9,8 @@ const Event = require('../models/Event');
 // ─── Helper: random item from array ──────────────────────────
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-// ─── Website URL (plain, no HTML) ────────────────────────────
+// ─── Website URL (plain) ──────────────────────────────────────
 const WEBSITE_URL = 'https://zerric.com';
-const AGENT_NAME = 'Zerric';
 
 // ─── Trending Topics ──────────────────────────────────────────
 const TRENDING_TOPICS = [
@@ -67,18 +66,27 @@ const TRENDING_TOPICS = [
   }
 ];
 
-// ─── Call‑to‑action pool (URL always followed by a space) ───
+// ─── Varied CTA pool (mix of link, no‑link, engagement) ──────
 const CTAS = [
-  `🏠 Have questions about the Louisville market? Contact Zerric at ${WEBSITE_URL} – he's the local expert!`,
+  // With website link (about 40%)
+  `🏠 Have questions? Contact Zerric at ${WEBSITE_URL} – he's the local expert!`,
   `📞 Thinking of buying or selling? Zerric can help – visit ${WEBSITE_URL} to get started.`,
-  `📧 Want to know what your home is worth? Zerric offers free valuations – check out ${WEBSITE_URL} for more.`,
-  `🔍 Seeing a home you like? Reach out to Zerric at ${WEBSITE_URL} for a private showing.`,
-  `📈 Not sure if now is the right time? Zerric can walk you through it – visit ${WEBSITE_URL}.`,
-  `🏡 Ready to make a move? Zerric is just a click away at ${WEBSITE_URL} .`,
-  `💬 Have questions about today's market? Zerric has the answers – visit ${WEBSITE_URL}.`,
+  `📧 Want a free home valuation? Check out ${WEBSITE_URL}.`,
+  `🔍 See a home you like? Reach out to Zerric at ${WEBSITE_URL}.`,
+  `📈 Not sure if now is the right time? Zerric can walk you through it – ${WEBSITE_URL}.`,
+  `🏡 Ready to make a move? Zerric is just a click away at ${WEBSITE_URL}.`,
   `📱 Thinking of selling? Zerric can help you get top dollar – visit ${WEBSITE_URL}.`,
-  `🤔 Wondering what this means for you? Zerric can explain – reach out at ${WEBSITE_URL}.`,
-  `🏘️ Looking for the perfect neighborhood? Zerric knows Louisville inside out – ${WEBSITE_URL}.`
+  // Without website link (about 40%)
+  `💬 Have questions about today's market? Zerric has the answers – just ask!`,
+  `📞 Zerric is available to chat about your real estate goals – reach out anytime.`,
+  `🤔 Wondering what this means for you? Zerric can explain in plain language.`,
+  `🏘️ Looking for the perfect neighborhood? Zerric knows Louisville inside out.`,
+  `📊 Want more insights like this? Zerric would love to connect with you.`,
+  `⭐ Zerric is here to help you navigate the Louisville market with confidence.`,
+  // Engagement prompts (about 20%)
+  `🗣️ What do you think about today's market? Zerric would love to hear your perspective.`,
+  `💡 Did you know? Zerric has helped dozens of families find their dream home.`,
+  `📲 Zerric offers free, no‑pressure consultations – reach out to learn more.`
 ];
 
 // ─── Trending Topic Templates ──────────────────────────────────
