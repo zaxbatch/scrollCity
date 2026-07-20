@@ -549,7 +549,7 @@
             });
         }
 
-        // ─── Full parser ─────────────────────────────────────────────
+        // ─── Improved Full parser ─────────────────────────────────────
         function parseText(text) {
             const listings = [];
             const stats = [];
@@ -569,7 +569,6 @@
 
             // ─── Detect sections ──────────────────────────────────────────────
             let currentSection = '';
-            let sectionData = {};
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
@@ -603,24 +602,53 @@
                 // Skip separator lines
                 if (/[-=_*]{10,}/.test(line)) continue;
 
-                // ─── Parse Listings (table rows) ──────────────────────────────
+                // ─── Parse Listings (flexible) ──────────────────────────────
                 if (currentSection === 'listings' && extractListings) {
-                    // Look for patterns like: "8034 Cedar Mdws Ln    $370,000   4     2      2,471  Active        1709651"
-                    const listingMatch = line.match(/^([A-Za-z0-9\s.,]+?)\s+(\$\s*[\d,]+)\s+(\d+)\s+(\d+\.?\d*)\s+([\d,]+)\s+([A-Za-z\s]+?)\s+([A-Z0-9\-]*)/);
-                    if (listingMatch) {
-                        const address = listingMatch[1].trim();
-                        const price = parseInt(listingMatch[2].replace(/[$,]/g, ''));
-                        const beds = parseInt(listingMatch[3]);
-                        const baths = parseFloat(listingMatch[4]);
-                        const sqft = parseInt(listingMatch[5].replace(/,/g, ''));
-                        const status = listingMatch[6].trim();
-                        const mls = listingMatch[7] || '';
+                    // Look for lines that have an address-like pattern and a price
+                    const addressMatch = line.match(/^([A-Za-z0-9\s.,]+?)\s+(\$\s*[\d,]+)/);
+                    if (addressMatch) {
+                        const address = addressMatch[1].trim();
+                        const price = parseInt(addressMatch[2].replace(/[$,]/g, ''));
+                        // Now try to extract other fields from the same line or next lines
+                        let beds = null, baths = null, sqft = null, status = 'Active', mls = '';
+                        const bedsMatch = line.match(/\b(\d+)\s*(?:bed|br)\b/i);
+                        const bathsMatch = line.match(/\b(\d+\.?\d*)\s*(?:bath|ba)\b/i);
+                        const sqftMatch = line.match(/\b([\d,]+)\s*(?:sq\s*ft|sqft)\b/i);
+                        const statusMatch = line.match(/\b(Active|Pending|Closed|Under Contract|Sold)\b/i);
+                        const mlsMatch = line.match(/MLS\s*ID:\s*([A-Z0-9\-]+)/i);
+                        // Or if MLS is at the end of the line
+                        if (!mlsMatch) {
+                            const mlsAtEnd = line.match(/\s+([A-Z0-9]{6,})$/);
+                            if (mlsAtEnd) mls = mlsAtEnd[1];
+                        } else {
+                            mls = mlsMatch[1];
+                        }
+                        if (bedsMatch) beds = parseInt(bedsMatch[1]);
+                        if (bathsMatch) baths = parseFloat(bathsMatch[1]);
+                        if (sqftMatch) sqft = parseInt(sqftMatch[1].replace(/,/g, ''));
+                        if (statusMatch) status = statusMatch[1];
+
+                        // If beds/baths/sqft not found in the same line, look ahead
+                        if (!beds && !baths && !sqft) {
+                            if (i + 1 < lines.length) {
+                                const nextLine = lines[i + 1];
+                                const bedsNext = nextLine.match(/\b(\d+)\s*(?:bed|br)\b/i);
+                                const bathsNext = nextLine.match(/\b(\d+\.?\d*)\s*(?:bath|ba)\b/i);
+                                const sqftNext = nextLine.match(/\b([\d,]+)\s*(?:sq\s*ft|sqft)\b/i);
+                                if (bedsNext) beds = parseInt(bedsNext[1]);
+                                if (bathsNext) baths = parseFloat(bathsNext[1]);
+                                if (sqftNext) sqft = parseInt(sqftNext[1].replace(/,/g, ''));
+                            }
+                        }
+
                         if (address && price) {
+                            const zipMatch = address.match(/\b(\d{5})\b/);
+                            const zip = zipMatch ? zipMatch[1] : '';
                             listings.push({
                                 address,
                                 city: 'Louisville',
                                 state: 'KY',
-                                zip: address.match(/\d{5}/)?.[0] || '',
+                                zip,
                                 price,
                                 bedrooms: beds || null,
                                 bathrooms: baths || null,
@@ -637,7 +665,7 @@
 
                 // ─── Parse Stats (key: value) ──────────────────────────────────
                 if (currentSection === 'stats' && extractStats) {
-                    const statMatch = line.match(/^([^:]+):\s*(.*)$/);
+                    const statMatch = line.match(/^([^:]+)\s*:\s*(.*)$/);
                     if (statMatch) {
                         const metric = statMatch[1].trim();
                         const value = statMatch[2].trim().replace(/,$/, '');
